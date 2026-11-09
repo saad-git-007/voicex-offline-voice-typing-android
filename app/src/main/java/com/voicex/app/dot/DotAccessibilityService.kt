@@ -17,6 +17,7 @@ import com.voicex.app.Settings
 import com.voicex.app.VoiceXApp
 import com.voicex.app.dictation.DotState
 import com.voicex.app.dictation.OutputSink
+import com.voicex.app.model.Lang
 import com.voicex.app.model.ModelFiles
 import com.voicex.app.model.ModelSpec
 import com.voicex.app.output.AutoPaster
@@ -61,6 +62,7 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
     wm = getSystemService(WindowManager::class.java)
     useAppOverlay = app.settings.fgsBlockedSeen && AndroidSettings.canDrawOverlays(this)
     dot = DotView(this, this).also { applySettings(it) }
+    updateLanguages()
     menu = DotMenu(this, wm, onLanguage = ::pickLanguage, onHide = ::hideUntilNextKeyboard)
     app.dictation.output = this
     stateJob = app.scope.launch { app.dictation.state.collect { onDictationState(it) } }
@@ -81,7 +83,7 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
     v.dotSizePx = (s.dotSizeDp * resources.displayMetrics.density).toInt()
     v.idleAlpha = s.dotOpacity
     v.hapticsEnabled = s.haptics
-    v.badgeSource = { app.settings.language.badge }
+    v.badgeSource = { if (multiLang) app.settings.language.badge else null }
   }
 
   /** Default lifecycle: load at service start and keep resident. */
@@ -114,7 +116,25 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
     refresh()
   }
 
+  /** True when more than one language's model is downloaded: only then is there a language to switch to. */
+  @Volatile private var multiLang = false
+
+  /** Languages whose model is downloaded. */
+  private fun downloadedLangs(): List<Lang> = Lang.entries.filter { ModelFiles.isPresent(this, ModelSpec.forLang(it, app.settings)) }
+
+  /**
+   * Re-reads which models are downloaded. With a single language downloaded there is no menu or badge, and the
+   * dictation language follows that model (e.g. back to English after the Urdu model is deleted).
+   */
+  private fun updateLanguages() {
+    val langs = downloadedLangs()
+    multiLang = langs.size > 1
+    if (langs.size == 1 && app.settings.language != langs[0]) app.switchLanguage(langs[0])
+    dot?.invalidate()
+  }
+
   private fun onKeyboardOpened() {
+    updateLanguages()
     unloadJob?.cancel()
     if (!app.settings.keepLoaded && ModelFiles.isPresent(this, ModelSpec.active(app.settings))) {
       app.scope.launch { runCatching { app.engine.ensureLoaded() } }
@@ -228,15 +248,18 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
       DotState.Idle, is DotState.Info, is DotState.Error -> {
         val v = dot ?: return
         val pos = dotPos ?: return
-        v.haptic(DotView.HAPTIC_LONG)
         app.dictation.dismiss()
+        updateLanguages()
+        // one language downloaded: nothing to switch to, so long-press just hides the dot
+        if (!multiLang) return hideUntilNextKeyboard()
+        v.haptic(DotView.HAPTIC_LONG)
         menu?.show(app.settings.language, pos.x, pos.y, v.dotSizePx, params?.type ?: WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY)
       }
       else -> Unit
     }
   }
 
-  private fun pickLanguage(lang: com.voicex.app.model.Lang) {
+  private fun pickLanguage(lang: Lang) {
     dot?.haptic(DotView.HAPTIC_TICK)
     app.switchLanguage(lang)
     dot?.invalidate()

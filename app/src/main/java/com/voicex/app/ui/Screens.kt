@@ -138,7 +138,7 @@ fun SettingsScreen(app: VoiceXApp, go: (Screen) -> Unit) {
           Text(if (l == Lang.EN) l.label else "${l.native}  ·  ${l.label}")
         }
       }
-      Muted("Switch quickly: long-press the dot and pick English or اردو. Each language has its own model; switching loads it (a second or two).")
+      Muted("Switch quickly: long-press the dot and pick English or اردو. The menu and the EN / UR badge appear once both models are downloaded; with one model, long-press just hides the dot. Switching loads the other model (a second or two).")
       HorizontalDivider()
       Text("Urdu model", fontWeight = FontWeight.SemiBold)
       Muted("OpenAI Whisper large-v3-turbo (q5_0, MIT licence), 574 MB.")
@@ -151,6 +151,7 @@ fun SettingsScreen(app: VoiceXApp, go: (Screen) -> Unit) {
               if (s.language == Lang.UR) app.engine.release()
               app.downloader.delete(ModelSpec.WHISPER_TURBO_Q5)
               app.downloader.reset()
+              app.switchLanguage(Lang.EN)
               urRefresh++
             }
           }) { Text("Delete the Urdu model (574 MB)") }

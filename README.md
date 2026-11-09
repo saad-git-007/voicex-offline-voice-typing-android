@@ -44,7 +44,7 @@ Built-in voice typing on most phones either sends audio to a server or is tied t
 - **Floating dictation dot.** Appears only while a soft keyboard is open, just above the keyboard's top edge, and disappears with it. Drag it anywhere; its position is remembered separately for portrait and landscape.
 - **One tap to talk.** Tap to record (red pulse plus elapsed time), tap again to transcribe. The text is copied to the clipboard, and with **auto-paste** inserted at the cursor of the field you're typing in.
 - **Fully offline speech recognition.** Punctuated, capitalised English, and Urdu in Urdu script. Audio and text never leave the device. The internet is used once per language, to download its model.
-- **English ⇄ Urdu in one long-press.** Long-press the dot and pick **English** or **اردو**. A small EN / UR badge on the dot shows the current language. Each language has its own model, and each gets its own benchmark, so Urdu runs on whichever engine is fastest and correct for it. Urdu is slower than English: on the S23 Ultra, 11.5 s of Urdu speech is transcribed in about 14 s (see [Urdu accuracy and speed](#urdu-accuracy-and-speed)).
+- **English ⇄ Urdu in one long-press.** Long-press the dot and pick **English** or **اردو**. A small EN / UR badge on the dot shows the current language. The menu and badge only appear once the Urdu model is downloaded; until then long-press simply hides the dot. Each language has its own model, and each gets its own benchmark, so Urdu runs on whichever engine is fastest and correct for it. Urdu is slower than English: on the S23 Ultra, 11.5 s of Urdu speech is transcribed in about 14 s (see [Urdu accuracy and speed](#urdu-accuracy-and-speed)).
 - **Hardware acceleration with automatic selection.** A built-in benchmark tries every engine the phone has (Hexagon NPU, Adreno GPU via OpenCL and Vulkan, CPU), checks each transcript against the CPU's, and uses the fastest correct one. It also checks each accelerator on long audio and routes recordings to an engine verified for that length.
 - **Never fails silently.** A backend that won't load or errors out falls back to CPU. An accelerator that returns an empty result for real speech is redone on the CPU automatically. An accelerator that crashes the app outright (a native abort can't be caught) is remembered after the restart and never used with that model again; Whisper is never tried on the Hexagon NPU, where it crashes.
 - **Thoughtful details.** Long-press to cancel, "Nothing heard" when you didn't speak (your clipboard stays untouched), a safety cap (30 s to 15 min, default 5 min, with a warning pulse before it), stops cleanly for phone calls and audio-focus loss, and silence trimming before inference.
@@ -82,8 +82,8 @@ Urdu runs on the CPU. On the S23 Ultra the NPU crashes with this model, OpenCL r
 
 ## Install
 
-1. Download `VoiceX-1.1.0-release.apk` from [**Releases**](../../releases).
-2. Install it with `adb install VoiceX-1.1.0-release.apk`, or open it on the phone and allow your file manager to install unknown apps.
+1. Download `VoiceX-1.1.1-release.apk` from [**Releases**](../../releases).
+2. Install it with `adb install VoiceX-1.1.1-release.apk`, or open it on the phone and allow your file manager to install unknown apps.
 3. Open VoiceX and follow the setup guide:
    1. allow the **microphone** and **notifications**;
    2. turn on the accessibility service **"VoiceX dictation dot"**. If it's greyed out ("Restricted setting"): App info → **⋮** → **Allow restricted settings**, then turn it on;
@@ -108,7 +108,7 @@ Urdu runs on the CPU. On the S23 Ultra the NPU crashes with this model, OpenCL r
 | Tap (grey) | Start recording |
 | Tap (red) | Stop and transcribe → **Copied** / **Pasted** |
 | Long-press while recording | Cancel and discard the audio |
-| Long-press when idle | Menu: **English** / **اردو Urdu** / Hide until the keyboard opens again |
+| Long-press when idle | With both language models downloaded: menu with **English** / **اردو Urdu** / Hide until the keyboard opens again. With one model: hide until the keyboard opens again |
 | Drag | Move it (remembered) |
 | Orange dot | Something needs attention (no model, mic denied…): tap it to fix |
 
@@ -153,7 +153,7 @@ scripts/fetch-deps.sh --hexagon    # optional: Hexagon SDK 6.7 Community Edition
 
 # release signing: create keystore.properties (storeFile, storePassword, keyAlias, keyPassword)
 PATH=$ANDROID_HOME/cmake/4.1.2/bin:$PATH ./gradlew assembleRelease
-# -> dist/VoiceX-1.1.0-release.apk
+# -> dist/VoiceX-1.1.1-release.apk
 ```
 
 The build applies the patches in `patches/` to the transcribe.cpp submodule (currently one: the short Whisper encoder window used for Urdu). It skips any that are already applied.
