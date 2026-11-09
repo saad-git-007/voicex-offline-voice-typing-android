@@ -40,6 +40,6 @@ class VoiceXApp : Application() {
     if (settings.language == lang) return
     settings.language = lang
     engine.refreshBenchmark()
-    AppLog.i("app", "dictation language: ${lang.label}")
+    AppLog.i("app", "dictation language: ${settings.langLabel(lang)}")
   }
 }

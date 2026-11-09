@@ -32,7 +32,7 @@ import kotlinx.coroutines.launch
 /** Why the dot is orange; [setupStep] is the setup screen a tap opens. */
 enum class ErrorKind(val setupStep: String, val message: String) {
   NO_MODEL("model", "No speech model yet"),
-  NO_URDU_MODEL("model", "Urdu model not downloaded"),
+  NO_WHISPER_MODEL("model", "Whisper model not downloaded"),
   MIC_DENIED("mic", "Microphone permission needed"),
   MIC_BLOCKED("overlay", "Android blocked the microphone"),
   MIC_BUSY("mic", "Microphone is busy"),
@@ -289,7 +289,7 @@ class DictationController(private val app: VoiceXApp) {
     runCatching { audio.removeOnModeChangedListener(modeListener) }
   }
 
-  private fun noModelKind() = if (app.settings.language == com.voicex.app.model.Lang.UR) ErrorKind.NO_URDU_MODEL else ErrorKind.NO_MODEL
+  private fun noModelKind() = if (app.settings.language == com.voicex.app.model.Lang.WHISPER) ErrorKind.NO_WHISPER_MODEL else ErrorKind.NO_MODEL
 
   companion object {
     private const val TAG = "dictation"

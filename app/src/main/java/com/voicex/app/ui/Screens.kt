@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
@@ -59,6 +61,7 @@ import com.voicex.app.model.Lang
 import androidx.compose.foundation.selection.selectable
 import com.voicex.app.model.ModelFiles
 import com.voicex.app.model.ModelSpec
+import com.voicex.app.model.WhisperLanguages
 import com.voicex.app.output.ClipboardWriter
 import com.voicex.app.ui.theme.Brand
 import java.text.DateFormat
@@ -81,8 +84,9 @@ fun HomeScreen(app: VoiceXApp, go: (Screen) -> Unit) {
         StatusLine(Checks.mic(ctx), if (Checks.mic(ctx)) "Microphone allowed" else "Microphone not allowed")
         val spec = ModelSpec.active(app.settings)
         val lang = app.settings.language
-        StatusLine(true, "Language: " + if (lang == Lang.EN) lang.label else "${lang.native} (${lang.label})")
-        StatusLine(Checks.model(app), if (Checks.model(app)) "Model: ${spec.label}" else "${lang.label} model not downloaded")
+        val s = app.settings
+        StatusLine(true, "Language: " + if (lang == Lang.EN) "English" else "${s.langNative(lang)} (${s.langLabel(lang)})")
+        StatusLine(Checks.model(app), if (Checks.model(app)) "Model: ${spec.label}" else "${s.langLabel(lang)} model not downloaded")
         val e = engine
         StatusLine(e !is EngineState.Failed, engineText(e, app))
         if (e is EngineState.Ready && e.note != null) Muted(e.note)
@@ -132,29 +136,44 @@ fun SettingsScreen(app: VoiceXApp, go: (Screen) -> Unit) {
     }
     SectionCard("Language") {
       var lang by remember { mutableStateOf(s.language) }
+      var whisperLang by remember { mutableStateOf(s.whisperLanguage) }
+      var picking by remember { mutableStateOf(false) }
       Lang.entries.forEach { l ->
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().selectable(selected = lang == l, onClick = { lang = l; app.switchLanguage(l) })) {
           RadioButton(selected = lang == l, onClick = { lang = l; app.switchLanguage(l) })
-          Text(if (l == Lang.EN) l.label else "${l.native}  ·  ${l.label}")
+          Text(if (l == Lang.EN) "English" else WhisperLanguages.displayName(whisperLang))
         }
       }
-      Muted("Switch quickly: long-press the dot and pick English or اردو. The menu and the EN / UR badge appear once both models are downloaded; with one model, long-press just hides the dot. Switching loads the other model (a second or two).")
+      Muted("Switch quickly: long-press the dot and pick English or ${WhisperLanguages.nativeName(whisperLang)}. The menu and the language badge (EN / ${WhisperLanguages.badge(whisperLang)}) appear once both models are downloaded; with one model, long-press just hides the dot. Switching loads the other model (a second or two).")
       HorizontalDivider()
-      Text("Urdu model", fontWeight = FontWeight.SemiBold)
-      Muted("OpenAI Whisper large-v3-turbo (q5_0, MIT licence), 574 MB.")
+      Text("Second language", fontWeight = FontWeight.SemiBold)
+      Muted("English uses Parakeet. The second language uses Whisper, which knows about 100 languages; pick the one you speak. Accuracy varies by language.")
+      OutlinedButton(onClick = { picking = true }) { Text(WhisperLanguages.displayName(whisperLang)) }
+      if (picking) {
+        WhisperLanguageDialog(whisperLang, onDismiss = { picking = false }) { code ->
+          picking = false
+          whisperLang = code
+          s.whisperLanguage = code
+          app.engine.refreshBenchmark()
+          com.voicex.app.AppLog.i("app", "second language: ${WhisperLanguages.englishName(code)}")
+        }
+      }
+      HorizontalDivider()
+      Text("Whisper model", fontWeight = FontWeight.SemiBold)
+      Muted("OpenAI Whisper large-v3-turbo (q5_0, MIT licence), 574 MB. One model for every second language.")
       var urRefresh by remember { mutableStateOf(0) }
       androidx.compose.runtime.key(urRefresh) {
         DownloadControls(app, ModelSpec.WHISPER_TURBO_Q5)
         if (ModelFiles.isPresent(app, ModelSpec.WHISPER_TURBO_Q5)) {
           TextButton(onClick = {
             scope.launch {
-              if (s.language == Lang.UR) app.engine.release()
+              if (s.language == Lang.WHISPER) app.engine.release()
               app.downloader.delete(ModelSpec.WHISPER_TURBO_Q5)
               app.downloader.reset()
               app.switchLanguage(Lang.EN)
               urRefresh++
             }
-          }) { Text("Delete the Urdu model (574 MB)") }
+          }) { Text("Delete the Whisper model (574 MB)") }
         }
       }
     }
@@ -334,4 +353,33 @@ fun TestScreen(app: VoiceXApp, go: (Screen) -> Unit) {
       }
     }
   }
+}
+
+/** Picks the Whisper language: a searchable list, native name first. */
+@Composable
+private fun WhisperLanguageDialog(current: String, onDismiss: () -> Unit, onPick: (String) -> Unit) {
+  var query by remember { mutableStateOf("") }
+  val all = remember { WhisperLanguages.sorted }
+  val shown = all.filter { query.isBlank() || WhisperLanguages.displayName(it).contains(query.trim(), ignoreCase = true) || it.equals(query.trim(), ignoreCase = true) }
+  androidx.compose.material3.AlertDialog(
+    onDismissRequest = onDismiss,
+    confirmButton = {},
+    dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    title = { Text("Second language") },
+    text = {
+      Column {
+        androidx.compose.material3.OutlinedTextField(value = query, onValueChange = { query = it }, singleLine = true, label = { Text("Search") }, modifier = Modifier.fillMaxWidth())
+        androidx.compose.foundation.lazy.LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp)) {
+          items(shown.size) { i ->
+            val code = shown[i]
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().selectable(selected = code == current, onClick = { onPick(code) }).padding(vertical = 2.dp)) {
+              RadioButton(selected = code == current, onClick = { onPick(code) })
+              Text(WhisperLanguages.displayName(code), modifier = Modifier.weight(1f))
+              Muted(WhisperLanguages.badge(code))
+            }
+          }
+        }
+      }
+    },
+  )
 }

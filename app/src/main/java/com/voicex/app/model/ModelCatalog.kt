@@ -3,15 +3,61 @@ package com.voicex.app.model
 import android.content.Context
 import com.voicex.app.Settings
 import java.io.File
+import java.util.Locale
 
-/** Dictation languages. Each uses its own model (see [ModelSpec.lang]). */
-enum class Lang(val code: String, val label: String, val native: String, val badge: String) {
-  EN("en", "English", "English", "EN"),
-  UR("ur", "Urdu", "اردو", "UR");
+/**
+ * The two dictation slots, each with its own model (see [ModelSpec.lang]): English (Parakeet) and a second language
+ * transcribed by Whisper, chosen in Settings (default Urdu, [Settings.whisperLanguage]). [key] is what Settings
+ * stores; "ur" predates the choice of language and is kept so existing installs keep their setting.
+ */
+enum class Lang(val key: String) {
+  EN("en"),
+  WHISPER("ur");
 
   companion object {
-    fun of(code: String?) = entries.firstOrNull { it.code == code } ?: EN
+    fun of(key: String?) = entries.firstOrNull { it.key == key } ?: EN
   }
+}
+
+/** The languages Whisper large-v3 transcribes, minus English (which uses Parakeet). */
+object WhisperLanguages {
+  const val DEFAULT = "ur"
+
+  /** Whisper's language codes, in its own order (openai/whisper, whisper/tokenizer.py), without "en". */
+  val codes: List<String> =
+    ("zh de es ru ko fr ja pt tr pl ca nl ar sv it id hi fi vi he uk el ms cs ro da hu ta no th ur hr bg lt la mi ml " +
+      "cy sk te fa lv bn sr az sl kn et mk br eu is hy ne mn bs kk sq sw gl mr pa si km sn yo so af oc ka be tg sd gu " +
+      "am yi lo uz fo ht ps tk nn mt sa lb my bo tl mg as tt haw ln ha ba jw su yue").split(' ')
+
+  // Whisper uses "jw" for Javanese; ISO 639 and Java's Locale use "jv"
+  private fun locale(code: String): Locale = Locale.forLanguageTag(if (code == "jw") "jv" else code)
+
+  fun englishName(code: String): String =
+    when (code) {
+      "yue" -> "Cantonese"
+      "haw" -> "Hawaiian"
+      else -> locale(code).getDisplayLanguage(Locale.ENGLISH).takeIf { it.isNotBlank() && it != code } ?: code
+    }
+
+  /** The language's name in itself (اردو, Français, 中文); the English name when Java has none. */
+  fun nativeName(code: String): String {
+    val l = locale(code)
+    val n = l.getDisplayLanguage(l)
+    return if (n.isBlank() || n == code) englishName(code) else n.replaceFirstChar { it.titlecase(l) }
+  }
+
+  fun badge(code: String): String = code.uppercase(Locale.ROOT)
+
+  /** "اردو · Urdu", "Français · French", or just "Hawaiian" when both names are the same. */
+  fun displayName(code: String): String {
+    val en = englishName(code)
+    val nat = nativeName(code)
+    return if (nat == en) en else "$nat · $en"
+  }
+
+  /** Sorted by English name, for the picker. */
+  val sorted: List<String>
+    get() = codes.sortedBy { englishName(it) }
 }
 
 /**
@@ -54,8 +100,8 @@ enum class ModelSpec(
     574_041_195L,
     "394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2",
     "Whisper large-v3-turbo q5_0 (574 MB)",
-    "OpenAI Whisper, used for Urdu.",
-    Lang.UR,
+    "OpenAI Whisper, for the second language (Urdu by default).",
+    Lang.WHISPER,
     "ggerganov/whisper.cpp",
     // S23 Ultra (Hexagon v73): ggml_abort in ggml_backend_sched_split_graph on the first run, which kills the app
     setOf("NPU"),
@@ -76,7 +122,7 @@ enum class ModelSpec(
     fun forLang(lang: Lang, settings: Settings): ModelSpec =
       when (lang) {
         Lang.EN -> of(settings.modelId).takeIf { it.lang == Lang.EN } ?: Q5_K_M
-        Lang.UR -> WHISPER_TURBO_Q5
+        Lang.WHISPER -> WHISPER_TURBO_Q5
       }
 
     /** The model for the current dictation language. */

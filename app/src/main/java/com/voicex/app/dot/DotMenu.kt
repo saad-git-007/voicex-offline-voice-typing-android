@@ -17,7 +17,7 @@ import android.widget.TextView
 import com.voicex.app.model.Lang
 
 /**
- * The dot's long-press menu: English / اردو / Hide. A small overlay window of its own, shown next to the dot and
+ * The dot's long-press menu: English / the Whisper language (اردو Urdu by default) / Hide. A small overlay window of its own, shown next to the dot and
  * closed by a choice, a touch anywhere else, or the keyboard closing.
  */
 class DotMenu(
@@ -40,7 +40,7 @@ class DotMenu(
    * [windowType] matches the dot's window (accessibility overlay or app overlay).
    */
   @SuppressLint("ClickableViewAccessibility")
-  fun show(current: Lang, dotX: Int, dotY: Int, dotSize: Int, windowType: Int) {
+  fun show(current: Lang, label: (Lang) -> String, dotX: Int, dotY: Int, dotSize: Int, windowType: Int) {
     dismiss()
     val list =
       LinearLayout(context).apply {
@@ -55,8 +55,7 @@ class DotMenu(
         elevation = dp(8f).toFloat()
       }
     Lang.entries.forEach { l ->
-      val label = if (l == Lang.EN) "English" else "${l.native}  Urdu"
-      list.addView(item(label, selected = l == current) { dismiss(); onLanguage(l) }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+      list.addView(item(label(l), selected = l == current) { dismiss(); onLanguage(l) }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
     }
     list.addView(View(context).apply { setBackgroundColor(Color.argb(50, 255, 255, 255)) }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(1f)).apply { setMargins(dp(8f), dp(4f), dp(8f), dp(4f)) })
     list.addView(item("Hide until next keyboard", selected = false, muted = true) { dismiss(); onHide() }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))

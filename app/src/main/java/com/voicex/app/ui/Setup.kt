@@ -228,8 +228,8 @@ fun DownloadControls(app: VoiceXApp, spec: ModelSpec = ModelSpec.active(app.sett
 @Composable
 private fun ModelStep(app: VoiceXApp) {
   SectionCard("Speech model") {
-    if (app.settings.language == Lang.UR) {
-      Muted("Urdu uses OpenAI Whisper large-v3-turbo, downloaded once from Hugging Face into VoiceX's private storage and checked against its SHA-256.")
+    if (app.settings.language == Lang.WHISPER) {
+      Muted("${app.settings.langLabel(Lang.WHISPER)} uses OpenAI Whisper large-v3-turbo, downloaded once from Hugging Face into VoiceX's private storage and checked against its SHA-256.")
       DownloadControls(app, ModelSpec.WHISPER_TURBO_Q5)
     } else {
       Muted("NVIDIA Parakeet Unified EN 0.6B, downloaded once from Hugging Face into VoiceX's private storage and checked against its SHA-256.")

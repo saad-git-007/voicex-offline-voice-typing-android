@@ -7,7 +7,7 @@
 <p align="center">
   <b>Offline, on-device voice typing for any Android keyboard.</b><br>
   Tap a floating dot, speak, and your words land on the clipboard (or straight into the text field).<br>
-  English and Urdu (اردو). Powered by NVIDIA Parakeet and OpenAI Whisper running locally on the Snapdragon NPU, GPU or CPU. No cloud, no account.
+  English, plus a second language of your choice from Whisper's ~100: Urdu (اردو) by default, or French, Chinese, Arabic, Hindi… Powered by NVIDIA Parakeet and OpenAI Whisper running locally on the Snapdragon NPU, GPU or CPU. No cloud, no account.
 </p>
 
 <p align="center">
@@ -43,8 +43,8 @@ Built-in voice typing on most phones either sends audio to a server or is tied t
 
 - **Floating dictation dot.** Appears only while a soft keyboard is open, just above the keyboard's top edge, and disappears with it. Drag it anywhere; its position is remembered separately for portrait and landscape.
 - **One tap to talk.** Tap to record (red pulse plus elapsed time), tap again to transcribe. The text is copied to the clipboard, and with **auto-paste** inserted at the cursor of the field you're typing in.
-- **Fully offline speech recognition.** Punctuated, capitalised English, and Urdu in Urdu script. Audio and text never leave the device. The internet is used once per language, to download its model.
-- **English ⇄ Urdu in one long-press.** Long-press the dot and pick **English** or **اردو**. A small EN / UR badge on the dot shows the current language. The menu and badge only appear once the Urdu model is downloaded; until then long-press simply hides the dot. Each language has its own model, and each gets its own benchmark, so Urdu runs on whichever engine is fastest and correct for it. Urdu is slower than English: on the S23 Ultra, 11.5 s of Urdu speech is transcribed in about 14 s (see [Urdu accuracy and speed](#urdu-accuracy-and-speed)).
+- **Fully offline speech recognition.** Punctuated, capitalised English, and your second language in its own script. Audio and text never leave the device. The internet is used once per language, to download its model.
+- **English ⇄ a second language in one long-press.** The second language is transcribed by OpenAI Whisper and is **Urdu** by default; Settings → Language → **Second language** switches it to any of the 99 other languages Whisper knows (Français, 中文, العربية, हिन्दी…), from a searchable list. Long-press the dot and pick **English** or that language. A small badge on the dot shows the current one (EN, UR, FR, ZH…). The menu and badge only appear once the Whisper model is downloaded; until then long-press simply hides the dot. Each model gets its own benchmark, so Whisper runs on whichever engine is fastest and correct for it. Urdu is slower than English: on the S23 Ultra, 11.5 s of Urdu speech is transcribed in about 14 s (see [Second language: accuracy and speed](#second-language-accuracy-and-speed)).
 - **Hardware acceleration with automatic selection.** A built-in benchmark tries every engine the phone has (Hexagon NPU, Adreno GPU via OpenCL and Vulkan, CPU), checks each transcript against the CPU's, and uses the fastest correct one. It also checks each accelerator on long audio and routes recordings to an engine verified for that length.
 - **Never fails silently.** A backend that won't load or errors out falls back to CPU. An accelerator that returns an empty result for real speech is redone on the CPU automatically. An accelerator that crashes the app outright (a native abort can't be caught) is remembered after the restart and never used with that model again; Whisper is never tried on the Hexagon NPU, where it crashes.
 - **Thoughtful details.** Long-press to cancel, "Nothing heard" when you didn't speak (your clipboard stays untouched), a safety cap (30 s to 15 min, default 5 min, with a warning pulse before it), stops cleanly for phone calls and audio-focus loss, and silence trimming before inference.
@@ -72,27 +72,31 @@ An earlier run on the same phone (before the long-audio check existed) measured 
   <img src="docs/screenshots/s23-ultra-benchmark.jpg" width="300" alt="Benchmark results on a Galaxy S23 Ultra">
 </p>
 
-### Urdu accuracy and speed
+### Second language: accuracy and speed
 
-Urdu uses the stock OpenAI Whisper large-v3-turbo (q5_0, 574 MB, in whisper.cpp's format) with the language set to Urdu. On six sentences from the Google FLEURS Urdu test set, it scored **22 % word error rate and 7.4 % character error rate**: most errors are spelling variants (چھے اگوا for چھے اغوا) rather than wrong words. Accuracy does not depend on the device.
+The second language uses the stock OpenAI Whisper large-v3-turbo (q5_0, 574 MB, in whisper.cpp's format), told which language to expect (no auto-detection, which often mistakes spoken Urdu for Hindi). One model covers every language. Accuracy varies a lot by language: it is strongest for widely spoken ones.
+
+**Urdu (default).** On six sentences from the Google FLEURS Urdu test set, it scored **22 % word error rate and 7.4 % character error rate**: most errors are spelling variants (چھے اگوا for چھے اغوا) rather than wrong words. Accuracy does not depend on the device.
 
 Whisper always encodes a 30-second window, padding short clips with silence, and the encoder is most of the work. VoiceX encodes only the recording plus 2 seconds instead. On the same six sentences that cost 22.4 % WER against 21.9 % for the full window, and was 2.5 times faster on the PC; shorter recordings gain more.
 
-Urdu runs on the CPU. On the S23 Ultra the NPU crashes with this model, OpenCL returns wrong text and Vulkan reports an error, so the benchmark picks the CPU. With the full 30-second window a 3-second Urdu recording took 34 to 45 seconds there. With the shorter window, 11.5 seconds of Urdu speech took **14.0 seconds** (encoder 13.2 s, decoder 0.8 s, 4 CPU threads); time grows with the length of the recording.
+**French and Chinese.** Spot-checked on the PC with three FLEURS sentences each. French came out essentially word for word. Mandarin was right apart from one homophone (钙甲 for 钙、钾). Whisper sometimes writes Chinese in Traditional characters; VoiceX gives it a short Simplified-Chinese starting prompt, which kept all three sentences Simplified.
+
+**Speed.** Whisper runs on the CPU. On the S23 Ultra the NPU crashes with this model, OpenCL returns wrong text and Vulkan reports an error, so the benchmark picks the CPU. Speed is about the same for every language. With the full 30-second window a 3-second Urdu recording took 34 to 45 seconds there. With the shorter window, 11.5 seconds of Urdu speech took **14.0 seconds** (encoder 13.2 s, decoder 0.8 s, 4 CPU threads); time grows with the length of the recording.
 
 ## Install
 
-1. Download `VoiceX-1.1.1-release.apk` from [**Releases**](../../releases).
-2. Install it with `adb install VoiceX-1.1.1-release.apk`, or open it on the phone and allow your file manager to install unknown apps.
+1. Download `VoiceX-1.2.0-release.apk` from [**Releases**](../../releases).
+2. Install it with `adb install VoiceX-1.2.0-release.apk`, or open it on the phone and allow your file manager to install unknown apps.
 3. Open VoiceX and follow the setup guide:
    1. allow the **microphone** and **notifications**;
    2. turn on the accessibility service **"VoiceX dictation dot"**. If it's greyed out ("Restricted setting"): App info → **⋮** → **Allow restricted settings**, then turn it on;
    3. download the model (541 MB, Wi-Fi);
    4. run the benchmark (about a minute).
 4. Open any app, tap a text field, and tap the dot.
-5. Optional, for Urdu: Settings → **Language** → download the Urdu model (574 MB), then long-press the dot and pick **اردو**.
+5. Optional, a second language: Settings → **Language** → download the Whisper model (574 MB). It is set to Urdu; change it under **Second language** if you speak something else. Then long-press the dot and pick it.
 
-**Requirements:** an arm64 Android 12+ phone with about 1.2 GB free (about 1.8 GB with Urdu). NPU and GPU acceleration need a Snapdragon; other phones use the CPU.
+**Requirements:** an arm64 Android 12+ phone with about 1.2 GB free (about 1.8 GB with the second language). NPU and GPU acceleration need a Snapdragon; other phones use the CPU.
 
 ## Using the dot
 
@@ -108,7 +112,7 @@ Urdu runs on the CPU. On the S23 Ultra the NPU crashes with this model, OpenCL r
 | Tap (grey) | Start recording |
 | Tap (red) | Stop and transcribe → **Copied** / **Pasted** |
 | Long-press while recording | Cancel and discard the audio |
-| Long-press when idle | With both language models downloaded: menu with **English** / **اردو Urdu** / Hide until the keyboard opens again. With one model: hide until the keyboard opens again |
+| Long-press when idle | With both language models downloaded: menu with **English** / your second language (**اردو Urdu** by default) / Hide until the keyboard opens again. With one model: hide until the keyboard opens again |
 | Drag | Move it (remembered) |
 | Orange dot | Something needs attention (no model, mic denied…): tap it to fix |
 
@@ -153,7 +157,7 @@ scripts/fetch-deps.sh --hexagon    # optional: Hexagon SDK 6.7 Community Edition
 
 # release signing: create keystore.properties (storeFile, storePassword, keyAlias, keyPassword)
 PATH=$ANDROID_HOME/cmake/4.1.2/bin:$PATH ./gradlew assembleRelease
-# -> dist/VoiceX-1.1.1-release.apk
+# -> dist/VoiceX-1.2.0-release.apk
 ```
 
 The build applies the patches in `patches/` to the transcribe.cpp submodule (currently one: the short Whisper encoder window used for Urdu). It skips any that are already applied.
@@ -191,5 +195,5 @@ BUILD_NOTES.md               toolchain, CMake changes for Android, backend resul
 - [transcribe.cpp](https://github.com/handy-computer/transcribe.cpp) and [ggml](https://github.com/ggml-org/ggml), MIT
 - [NVIDIA Parakeet Unified EN 0.6B](https://huggingface.co/handy-computer/parakeet-unified-en-0.6b-gguf), GGUF by handy-computer. The model has its own license; see the model card.
 - [OpenAI Whisper](https://github.com/openai/whisper) large-v3-turbo (MIT), whisper.cpp conversion from [ggerganov/whisper.cpp](https://huggingface.co/ggerganov/whisper.cpp)
-- Urdu benchmark clips: two sentences from [Google FLEURS](https://huggingface.co/datasets/google/fleurs) (CC BY 4.0), test split
+- Whisper benchmark clips (Urdu): two sentences from [Google FLEURS](https://huggingface.co/datasets/google/fleurs) (CC BY 4.0), test split
 - Benchmark clip: the opening of the JFK inaugural address (US government work, public domain), from transcribe.cpp's samples

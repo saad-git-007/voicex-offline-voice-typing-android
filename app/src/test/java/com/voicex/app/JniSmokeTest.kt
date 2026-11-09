@@ -41,13 +41,13 @@ class JniSmokeTest {
     try {
       assertEquals("CPU", TranscribeNative.nativeBackend(h))
       val pcm = File("src/main/assets/bench/jfk-5s.wav").inputStream().let { WavReader.readMono16k(it) }
-      val st = TranscribeNative.nativeRun(h, pcm, pcm.size, "en")
+      val st = TranscribeNative.nativeRun(h, pcm, pcm.size, "en", null)
       assertEquals(TranscribeNative.nativeStatusString(st), TranscribeNative.OK, st)
       val text = TranscribeNative.nativeText(h).toString(Charsets.UTF_8)
       println("JNI transcript: \"$text\"  timings(ms)=${TranscribeNative.nativeTimings(h).toList()}")
       assertTrue(text, WordDiff.matches("And so, my fellow Americans, ask not.", text))
       // invalid input is rejected cleanly
-      assertEquals(1 /* INVALID_ARG */, TranscribeNative.nativeRun(h, pcm, 0, "en"))
+      assertEquals(1 /* INVALID_ARG */, TranscribeNative.nativeRun(h, pcm, 0, "en", null))
     } finally {
       TranscribeNative.nativeClose(h)
     }
@@ -64,7 +64,7 @@ class JniSmokeTest {
     val h = out[0]
     try {
       val pcm = File("src/main/assets/bench/fleurs-ur-6s.wav").inputStream().let { WavReader.readMono16k(it) }
-      val rs = TranscribeNative.nativeRun(h, pcm, pcm.size, "ur")
+      val rs = TranscribeNative.nativeRun(h, pcm, pcm.size, "ur", null)
       assertEquals(TranscribeNative.nativeStatusString(rs), TranscribeNative.OK, rs)
       val text = TranscribeNative.nativeText(h).toString(Charsets.UTF_8).trim()
       println("JNI Urdu transcript: \"$text\"")

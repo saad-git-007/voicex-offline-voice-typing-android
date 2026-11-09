@@ -305,7 +305,7 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
   /** Runs [pcm] on session [h] with the loaded model's language. */
   private fun run(h: Long, pcm: FloatArray): Int {
     val kind = if (h == cpuHandle) EngineKind.CPU else loadedKind
-    return guarded(loadedPath ?: "", kind) { TranscribeNative.nativeRun(h, pcm, pcm.size, loadedLang) }
+    return guarded(loadedPath ?: "", kind) { TranscribeNative.nativeRun(h, pcm, pcm.size, loadedLang, promptFor(loadedLang)) }
   }
 
   /** What the settings + benchmark say to use. Null = AUTO without a benchmark yet. */
@@ -342,27 +342,29 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
       benchmarkNow(spec) { _state.value = EngineState.Loading(it) }
       kind = desiredKind(spec) ?: EngineKind.CPU
     }
+    // same model, different Whisper language: the language is passed per run, so no reload is needed
+    if (handle != 0L && loadedPath == file.path) loadedLang = settings.langCode(spec.lang)
     val ready = _state.value
     if (handle != 0L && loadedPath == file.path && loadedKind == kind && loadedThreads == threads && ready is EngineState.Ready) return ready
 
     _state.value = EngineState.Loading("Loading model on ${kind.label}")
     var note: String? = null
     EngineKind.entries.firstOrNull { it != EngineKind.CPU && it.matches(settings.backend) && settings.backend != BackendPref.AUTO }?.let { chosen ->
-      if (crashes(spec, chosen)) note = "${chosen.label} crashes with the ${spec.lang.label} model; using ${kind.label}"
+      if (crashes(spec, chosen)) note = "${chosen.label} crashes with ${spec.id}; using ${kind.label}"
     }
-    var err = open(file.path, kind, threads, spec.lang.code)
+    var err = open(file.path, kind, threads, settings.langCode(spec.lang))
     if (err != null && kind != EngineKind.CPU) {
       AppLog.w(TAG, "${kind.label} failed to load ($err); falling back to CPU")
       broken += kind
       note = "${kind.label} failed ($err); using CPU"
       kind = EngineKind.CPU
-      err = open(file.path, kind, threads, spec.lang.code)
+      err = open(file.path, kind, threads, settings.langCode(spec.lang))
     }
     if (err != null) {
       _state.value = EngineState.Failed("Could not load the model: $err")
       throw EngineException("Could not load the model: $err")
     }
-    AppLog.ok(TAG, "${spec.id} (${spec.lang.label}) loaded on ${kind.label} [$loadedDevice], $threads threads")
+    AppLog.ok(TAG, "${spec.id} (${settings.langLabel(spec.lang)}) loaded on ${kind.label} [$loadedDevice], $threads threads")
     return EngineState.Ready(kind, loadedDevice, note).also { _state.value = it }
   }
 
@@ -546,7 +548,8 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
         continue
       }
       progress("Benchmark: ${kind.label}…")
-      val err = open(path, kind, threads, spec.lang.code)
+      // the benchmark compares engines on its bundled clips, so it uses their language (Urdu for Whisper)
+      val err = open(path, kind, threads, benchLangCode(spec.lang))
       if (err != null) {
         entries += BenchEntry(kind, deviceFor(kind)?.name ?: "", 0, "", false, "load failed: $err")
         AppLog.w(TAG, "benchmark ${kind.label}: load failed: $err")
@@ -630,13 +633,22 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
     fun clipsFor(lang: Lang): Pair<String, String> =
       when (lang) {
         Lang.EN -> BENCH_CLIP to BENCH_CLIP_11S
-        Lang.UR -> BENCH_CLIP_UR to BENCH_CLIP_UR_12S
+        Lang.WHISPER -> BENCH_CLIP_UR to BENCH_CLIP_UR_12S
       }
 
     /** Length of the short benchmark clip, for the results table. */
     /** Mel frames (10 ms each) of silence encoded after a short Urdu recording; chosen on FLEURS, see README. */
     const val WHISPER_WINDOW_PAD_FRAMES = 200
 
-    fun shortClipLabel(lang: Lang): String = if (lang == Lang.UR) "6.2 s Urdu clip" else "5.4 s clip"
+    /**
+     * Whisper writes Chinese in Traditional or Simplified characters unpredictably; a Simplified-Chinese starting
+     * prompt keeps it Simplified (checked on three FLEURS Mandarin sentences: one came out Traditional without it).
+     */
+    fun promptFor(lang: String): String? = if (lang == "zh") "以下是普通话的句子。" else null
+
+    /** Language of the bundled benchmark clips for [lang]'s model. */
+    fun benchLangCode(lang: Lang): String = if (lang == Lang.EN) "en" else "ur"
+
+    fun shortClipLabel(lang: Lang): String = if (lang == Lang.WHISPER) "6.2 s Urdu clip" else "5.4 s clip"
   }
 }

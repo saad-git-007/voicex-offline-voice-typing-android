@@ -113,3 +113,26 @@ class EngineBitsTest {
     assertTrue(pcm.any { kotlin.math.abs(it) > 0.1f })
   }
 }
+
+class WhisperLanguagesTest {
+  @Test fun listHasWhispersLanguagesWithoutEnglish() {
+    val c = com.voicex.app.model.WhisperLanguages.codes
+    assertEquals(99, c.size)
+    assertEquals(c.size, c.toSet().size)
+    assertFalse("en" in c)
+    assertTrue("ur" in c && "fr" in c && "zh" in c && "yue" in c)
+  }
+
+  @Test fun namesAndBadges() {
+    val w = com.voicex.app.model.WhisperLanguages
+    assertEquals("Urdu", w.englishName("ur"))
+    assertEquals("اردو", w.nativeName("ur"))
+    assertEquals("Français · French", w.displayName("fr"))
+    assertEquals("中文", w.nativeName("zh"))
+    assertEquals("Javanese", w.englishName("jw"))
+    assertEquals("Cantonese", w.englishName("yue"))
+    assertEquals("FR", w.badge("fr"))
+    // every code gets a real English name, not the bare code
+    w.codes.forEach { assertTrue(it, w.englishName(it) != it) }
+  }
+}

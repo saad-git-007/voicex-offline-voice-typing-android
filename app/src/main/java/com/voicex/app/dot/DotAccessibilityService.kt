@@ -71,6 +71,7 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
         dot?.let { applySettings(it) }
         if (key == Settings.K_DOT_SIZE) app.settings.resetDotOffsets()
         if (key == Settings.K_KEEP_LOADED || key == Settings.K_MODEL || key == Settings.K_BACKEND || key == Settings.K_THREADS || key == Settings.K_LANGUAGE) maybePreload()
+        if (key == Settings.K_WHISPER_LANGUAGE) dot?.invalidate()
         refresh()
       }
     }
@@ -83,7 +84,7 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
     v.dotSizePx = (s.dotSizeDp * resources.displayMetrics.density).toInt()
     v.idleAlpha = s.dotOpacity
     v.hapticsEnabled = s.haptics
-    v.badgeSource = { if (multiLang) app.settings.language.badge else null }
+    v.badgeSource = { if (multiLang) app.settings.let { it.langBadge(it.language) } else null }
   }
 
   /** Default lifecycle: load at service start and keep resident. */
@@ -253,10 +254,18 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
         // one language downloaded: nothing to switch to, so long-press just hides the dot
         if (!multiLang) return hideUntilNextKeyboard()
         v.haptic(DotView.HAPTIC_LONG)
-        menu?.show(app.settings.language, pos.x, pos.y, v.dotSizePx, params?.type ?: WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY)
+        menu?.show(app.settings.language, ::menuLabel, pos.x, pos.y, v.dotSizePx, params?.type ?: WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY)
       }
       else -> Unit
     }
+  }
+
+  /** "English", "اردو  Urdu", "Français  French"; one name when both are the same. */
+  private fun menuLabel(lang: Lang): String {
+    val s = app.settings
+    val en = s.langLabel(lang)
+    val nat = s.langNative(lang)
+    return if (nat == en) en else "$nat  $en"
   }
 
   private fun pickLanguage(lang: Lang) {
@@ -264,7 +273,7 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
     app.switchLanguage(lang)
     dot?.invalidate()
     val ready = ModelFiles.isPresent(this, ModelSpec.active(app.settings))
-    app.dictation.showInfo(if (ready) lang.native else "${lang.label} model not downloaded", if (ready) 1200 else 2500)
+    app.dictation.showInfo(if (ready) app.settings.langNative(lang) else "${app.settings.langLabel(lang)} model not downloaded", if (ready) 1200 else 2500)
   }
 
   private fun hideUntilNextKeyboard() {

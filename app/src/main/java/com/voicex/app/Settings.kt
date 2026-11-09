@@ -3,6 +3,7 @@ package com.voicex.app
 import android.content.Context
 import android.content.SharedPreferences
 import com.voicex.app.model.Lang
+import com.voicex.app.model.WhisperLanguages
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -54,7 +55,24 @@ class Settings(context: Context) {
   /** Dictation language; switched from Settings or the dot's long-press menu. */
   var language: Lang
     get() = Lang.of(prefs.getString(K_LANGUAGE, "en"))
-    set(v) = prefs.edit().putString(K_LANGUAGE, v.code).apply()
+    set(v) = prefs.edit().putString(K_LANGUAGE, v.key).apply()
+
+  /** Language code Whisper transcribes in the second slot ("ur", "fr", "zh"…); Urdu by default. */
+  var whisperLanguage: String
+    get() = prefs.getString(K_WHISPER_LANGUAGE, null)?.takeIf { it in WhisperLanguages.codes } ?: WhisperLanguages.DEFAULT
+    set(v) = prefs.edit().putString(K_WHISPER_LANGUAGE, v).apply()
+
+  /** Language code passed to the model for [lang]. */
+  fun langCode(lang: Lang): String = if (lang == Lang.EN) "en" else whisperLanguage
+
+  /** "English", "Urdu", "French"… */
+  fun langLabel(lang: Lang): String = if (lang == Lang.EN) "English" else WhisperLanguages.englishName(whisperLanguage)
+
+  /** "English", "اردو", "Français"… */
+  fun langNative(lang: Lang): String = if (lang == Lang.EN) "English" else WhisperLanguages.nativeName(whisperLanguage)
+
+  /** Tag on the dot: "EN", "UR", "FR"… */
+  fun langBadge(lang: Lang): String = if (lang == Lang.EN) "EN" else WhisperLanguages.badge(whisperLanguage)
 
   var wifiOnly: Boolean
     get() = prefs.getBoolean(K_WIFI_ONLY, true)
@@ -146,6 +164,7 @@ class Settings(context: Context) {
     const val K_TRAILING_SPACE = "trailing_space"
     const val K_MODEL = "model"
     const val K_LANGUAGE = "language"
+    const val K_WHISPER_LANGUAGE = "whisper_language"
     const val K_WIFI_ONLY = "wifi_only"
     const val K_BACKEND = "backend"
     const val K_THREADS = "threads"

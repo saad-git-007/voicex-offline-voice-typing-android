@@ -47,7 +47,7 @@ object TranscribeNative {
   external fun nativeBackend(handle: Long): String
 
   /** 16 kHz mono float PCM in [-1, 1], with a language hint ("en", "ur"; null = model default). Returns a transcribe_status. */
-  external fun nativeRun(handle: Long, pcm: FloatArray, n: Int, language: String?): Int
+  external fun nativeRun(handle: Long, pcm: FloatArray, n: Int, language: String?, prompt: String?): Int
 
   /** UTF-8 bytes of transcribe_full_text(). */
   external fun nativeText(handle: Long): ByteArray
