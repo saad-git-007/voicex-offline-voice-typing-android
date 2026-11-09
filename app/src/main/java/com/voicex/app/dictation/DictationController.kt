@@ -32,6 +32,7 @@ import kotlinx.coroutines.launch
 /** Why the dot is orange; [setupStep] is the setup screen a tap opens. */
 enum class ErrorKind(val setupStep: String, val message: String) {
   NO_MODEL("model", "No speech model yet"),
+  NO_URDU_MODEL("model", "Urdu model not downloaded"),
   MIC_DENIED("mic", "Microphone permission needed"),
   MIC_BLOCKED("overlay", "Android blocked the microphone"),
   MIC_BUSY("mic", "Microphone is busy"),
@@ -110,9 +111,9 @@ class DictationController(private val app: VoiceXApp) {
       _state.value = DotState.Error(ErrorKind.MIC_DENIED)
       return
     }
-    if (!ModelFiles.isPresent(app, ModelSpec.of(app.settings.modelId))) {
+    if (!ModelFiles.isPresent(app, ModelSpec.active(app.settings))) {
       AppLog.w(TAG, "dot tapped but no model is downloaded")
-      _state.value = DotState.Error(ErrorKind.NO_MODEL)
+      _state.value = DotState.Error(noModelKind())
       return
     }
     if (audio.mode == AudioManager.MODE_IN_CALL || audio.mode == AudioManager.MODE_IN_COMMUNICATION) {
@@ -226,7 +227,7 @@ class DictationController(private val app: VoiceXApp) {
         _state.value = DotState.Idle
         return
       } catch (e: NoModelException) {
-        _state.value = DotState.Error(ErrorKind.NO_MODEL)
+        _state.value = DotState.Error(noModelKind())
         return
       } catch (e: Exception) {
         AppLog.e(TAG, "transcription failed", e)
@@ -251,6 +252,11 @@ class DictationController(private val app: VoiceXApp) {
       else AppLog.ok(TAG, "auto-paste: ${outcome.name}")
     }
     flash(DotState.Done(label), if (label.length > 10) 1800 else 1100)
+  }
+
+  /** Shows [label] next to the idle dot for a moment (e.g. the language just picked). */
+  fun showInfo(label: String, ms: Long = 1400) {
+    if (!isBusy) flash(DotState.Info(label), ms)
   }
 
   private fun flash(s: DotState, ms: Long = 1100) {
@@ -282,6 +288,8 @@ class DictationController(private val app: VoiceXApp) {
     focusRequest = null
     runCatching { audio.removeOnModeChangedListener(modeListener) }
   }
+
+  private fun noModelKind() = if (app.settings.language == com.voicex.app.model.Lang.UR) ErrorKind.NO_URDU_MODEL else ErrorKind.NO_MODEL
 
   companion object {
     private const val TAG = "dictation"

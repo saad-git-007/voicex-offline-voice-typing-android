@@ -53,6 +53,16 @@ class DotView(context: Context, private val listener: Listener) : View(context) 
       invalidate()
     }
 
+  /**
+   * Small language tag drawn on the idle / recording dot ("EN", "UR"); null = none. Read at every draw, so the tag
+   * always shows the current language even if a settings-change event was missed.
+   */
+  var badgeSource: () -> String? = { null }
+    set(v) {
+      field = v
+      invalidate()
+    }
+
   var hapticsEnabled = true
   var labelOnRight = false
 
@@ -82,6 +92,12 @@ class DotView(context: Context, private val listener: Listener) : View(context) 
     color = Color.WHITE
     textSize = 12.5f * density
     isFakeBoldText = true
+  }
+  private val badgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = BRAND_A }
+  private val badgeText = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    color = Color.WHITE
+    isFakeBoldText = true
+    textAlign = Paint.Align.CENTER
   }
   private val path = Path()
   private val rect = RectF()
@@ -198,6 +214,21 @@ class DotView(context: Context, private val listener: Listener) : View(context) 
         canvas.drawCircle(cx, cy + s * 0.18f, s * 0.045f, glyphFill)
       }
       else -> drawMic(canvas, cx, cy, s, fill.color)
+    }
+
+    // language badge, bottom-right on the circle
+    val b = badgeSource()
+    if (b != null && (st == DotState.Idle || st is DotState.Recording)) {
+      badgeText.textSize = s * 0.2f
+      val bw = badgeText.measureText(b) + s * 0.14f
+      val bh = s * 0.3f
+      val bx = cx + r * 0.78f - bw / 2
+      val by = cy + r * 0.78f - bh / 2
+      rect.set(bx, by, bx + bw, by + bh)
+      badgePaint.alpha = (alpha.coerceAtLeast(0.85f) * 255).toInt()
+      canvas.drawRoundRect(rect, bh / 2, bh / 2, badgePaint)
+      val fm = badgeText.fontMetrics
+      canvas.drawText(b, bx + bw / 2, by + bh / 2 - (fm.ascent + fm.descent) / 2, badgeText)
     }
 
     if (animate) postInvalidateOnAnimation()

@@ -35,6 +35,13 @@ class WordDiffTest {
     assertEquals(2, WordDiff.distance("a b c", "a"))
     assertEquals(1, WordDiff.distance("don't stop", "dont stop"))
   }
+
+  @Test fun urduWordsIgnoreVowelMarksAndPunctuation() {
+    // zer/pesh/shadda and the Urdu full stop and comma must not split or change words
+    assertEquals(listOf("جن", "میں", "بچے", "اور", "بوڑھے", "شامل", "تھے"), WordDiff.words("جِن میں بچّے اور بُوڑھے شامل تھے۔"))
+    assertEquals(0, WordDiff.distance("کیا گیا تھا، جن میں", "کیا گیا تھا جِن میں"))
+    assertTrue(WordDiff.matches("فلپائنی فوٹوگرافروں کے ساتھ", "فلپائنی فوٹوگرافروں کے ساتھ۔"))
+  }
 }
 
 class DotPlacementTest {

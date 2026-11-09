@@ -1,13 +1,17 @@
 package com.voicex.app.engine
 
+import android.app.ActivityManager
+import android.app.ApplicationExitInfo
 import android.content.Context
 import android.system.Os
 import com.voicex.app.AppLog
 import com.voicex.app.BackendPref
 import com.voicex.app.Settings
 import com.voicex.app.audio.PcmUtils
+import com.voicex.app.model.Lang
 import com.voicex.app.model.ModelFiles
 import com.voicex.app.model.ModelSpec
+import java.io.File
 import java.util.concurrent.Executors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -153,6 +157,8 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
   private var loadedKind: EngineKind? = null
   private var loadedDevice = ""
   private var loadedThreads = 0
+  /** Language hint passed to every run on the loaded model ("en", "ur"). */
+  private var loadedLang = "en"
   private var pinned: IntArray? = null
 
   /** A CPU session kept next to an accelerator, for recordings the accelerator isn't trusted with. Lazy. */
@@ -179,6 +185,9 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
     try {
       // FastRPC looks for the NPU-side libggml-htp-v*.so on this ';'-separated path; ours sits in nativeLibraryDir
       Os.setenv("ADSP_LIBRARY_PATH", "$libDir;/vendor/lib/rfsa/adsp;/vendor/dsp/cdsp;/system/lib/rfsa/adsp;/dsp", true)
+      // Whisper (Urdu): encode short recordings over their real length + a margin instead of a padded 30 s window.
+      // The encoder is most of the cost and scales with the window (see the patch in arch/whisper/model.cpp).
+      Os.setenv("TRANSCRIBE_WHISPER_SHORT_WINDOW_PAD_FRAMES", WHISPER_WINDOW_PAD_FRAMES.toString(), true)
       TranscribeNative.load()
       val st = TranscribeNative.nativeInitBackends(libDir)
       devices = TranscribeNative.nativeDevices().mapNotNull { Device.parse(it) }
@@ -187,10 +196,46 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
         throw EngineException("No compute backend could be loaded (${TranscribeNative.nativeStatusString(st)})")
       }
       nativeReady = true
+      noteCrashFromLastRun()
     } catch (e: Throwable) {
       initError = e.message ?: e.toString()
       AppLog.e(TAG, "native engine init failed", e)
       throw EngineException(initError!!)
+    }
+  }
+
+  /**
+   * A ggml abort in an accelerator backend kills the whole process; Kotlin can't catch it. So each accelerator call
+   * is bracketed by Settings.nativeInFlight, and if the last process died in native code with it still set, that
+   * model + accelerator pair is recorded and never tried again (until the next app version).
+   */
+  private fun noteCrashFromLastRun() {
+    val inFlight = settings.nativeInFlight ?: return
+    settings.nativeInFlight = null
+    val nativeCrash =
+      runCatching {
+        val am = context.getSystemService(ActivityManager::class.java)
+        am.getHistoricalProcessExitReasons(context.packageName, 0, 1).firstOrNull()?.reason == ApplicationExitInfo.REASON_CRASH_NATIVE
+      }.getOrDefault(false)
+    if (!nativeCrash) return
+    val file = inFlight.substringBefore('|')
+    val kind = inFlight.substringAfter('|')
+    settings.addCrashedEngine(file, kind)
+    AppLog.w(TAG, "the app crashed in native code while running $file on $kind; that engine won't be used with this model again")
+  }
+
+  /** [kind] must not be used for [spec]: known to crash with it, or it crashed the app on this phone. */
+  private fun crashes(spec: ModelSpec, kind: EngineKind): Boolean =
+    kind != EngineKind.CPU && (kind.name in spec.knownBadEngines || kind.name in settings.crashedEngines(spec.fileName))
+
+  /** Runs [block] with the crash marker set when [kind] is an accelerator. */
+  private inline fun <T> guarded(path: String, kind: EngineKind?, block: () -> T): T {
+    if (kind == null || kind == EngineKind.CPU) return block()
+    settings.nativeInFlight = "${File(path).name}|${kind.name}"
+    try {
+      return block()
+    } finally {
+      settings.nativeInFlight = null
     }
   }
 
@@ -218,13 +263,13 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
   private fun deviceFor(kind: EngineKind): Device? = if (kind == EngineKind.CPU) null else devices.firstOrNull { it.engine == kind }
 
   /** Opens [kind]; returns null on success or the error text. Leaves the engine unloaded on failure. */
-  private fun open(path: String, kind: EngineKind, threads: Int): String? {
+  private fun open(path: String, kind: EngineKind, threads: Int, lang: String = loadedLang): String? {
     closeNow()
     val dev = deviceFor(kind)
     if (kind != EngineKind.CPU && dev == null) return "${kind.label} is not available on this phone"
     pinThreads(threads)
     val out = LongArray(1)
-    val st = TranscribeNative.nativeOpen(path, dev?.index ?: -1, threads, out)
+    val st = guarded(path, kind) { TranscribeNative.nativeOpen(path, dev?.index ?: -1, threads, out) }
     if (st != TranscribeNative.OK || out[0] == 0L) {
       val why = TranscribeNative.nativeStatusString(st)
       AppLog.w(TAG, "${kind.label}: model load failed: $why (status $st)")
@@ -235,6 +280,7 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
     loadedPath = path
     loadedKind = kind
     loadedThreads = threads
+    loadedLang = lang
     loadedDevice = TranscribeNative.nativeBackend(h)
     return null
   }
@@ -254,7 +300,13 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
     loadedKind = null
   }
 
-  private fun currentSpec() = ModelSpec.of(settings.modelId)
+  private fun currentSpec() = ModelSpec.active(settings)
+
+  /** Runs [pcm] on session [h] with the loaded model's language. */
+  private fun run(h: Long, pcm: FloatArray): Int {
+    val kind = if (h == cpuHandle) EngineKind.CPU else loadedKind
+    return guarded(loadedPath ?: "", kind) { TranscribeNative.nativeRun(h, pcm, pcm.size, loadedLang) }
+  }
 
   /** What the settings + benchmark say to use. Null = AUTO without a benchmark yet. */
   private fun desiredKind(spec: ModelSpec): EngineKind? {
@@ -262,11 +314,11 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
     val available = EngineKind.entries.filter { k -> k == EngineKind.CPU || devices.any { it.engine == k } }
     if (pref != BackendPref.AUTO) {
       val k = available.firstOrNull { it.matches(pref) } ?: EngineKind.CPU
-      return if (k in broken) EngineKind.CPU else k
+      return if (k in broken || crashes(spec, k)) EngineKind.CPU else k
     }
     val bench = BenchmarkResult.fromJson(settings.benchmarkJson(spec.id)) ?: return null
     val w = bench.winner
-    return if (w in available && w !in broken) w else EngineKind.CPU
+    return if (w in available && w !in broken && !crashes(spec, w)) w else EngineKind.CPU
   }
 
   /**
@@ -295,19 +347,22 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
 
     _state.value = EngineState.Loading("Loading model on ${kind.label}")
     var note: String? = null
-    var err = open(file.path, kind, threads)
+    EngineKind.entries.firstOrNull { it != EngineKind.CPU && it.matches(settings.backend) && settings.backend != BackendPref.AUTO }?.let { chosen ->
+      if (crashes(spec, chosen)) note = "${chosen.label} crashes with the ${spec.lang.label} model; using ${kind.label}"
+    }
+    var err = open(file.path, kind, threads, spec.lang.code)
     if (err != null && kind != EngineKind.CPU) {
       AppLog.w(TAG, "${kind.label} failed to load ($err); falling back to CPU")
       broken += kind
       note = "${kind.label} failed ($err); using CPU"
       kind = EngineKind.CPU
-      err = open(file.path, kind, threads)
+      err = open(file.path, kind, threads, spec.lang.code)
     }
     if (err != null) {
       _state.value = EngineState.Failed("Could not load the model: $err")
       throw EngineException("Could not load the model: $err")
     }
-    AppLog.ok(TAG, "${spec.id} loaded on ${kind.label} [$loadedDevice], $threads threads")
+    AppLog.ok(TAG, "${spec.id} (${spec.lang.label}) loaded on ${kind.label} [$loadedDevice], $threads threads")
     return EngineState.Ready(kind, loadedDevice, note).also { _state.value = it }
   }
 
@@ -361,7 +416,7 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
         cpuHandle
       }
     val t0 = System.nanoTime()
-    val st = TranscribeNative.nativeRun(h, pcm, pcm.size)
+    val st = run(h, pcm)
     val ms = (System.nanoTime() - t0) / 1_000_000
     return toTranscript(st, h, audioMs, ms, EngineKind.CPU, "CPU")
   }
@@ -377,7 +432,7 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
 
   private fun runOnPrimary(pcm: FloatArray, audioMs: Long): Transcript {
       var t0 = System.nanoTime()
-      var st = TranscribeNative.nativeRun(handle, pcm, pcm.size)
+      var st = run(handle, pcm)
       if (st == TranscribeNative.ERR_BACKEND && loadedKind != EngineKind.CPU) {
         // transcribe.h: TRANSCRIBE_ERR_BACKEND is recoverable in-process: free, reload on CPU, retry.
         val failed = loadedKind!!
@@ -387,7 +442,7 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
         open(path, EngineKind.CPU, settings.threads)?.let { throw EngineException("CPU reload failed: $it") }
         _state.value = EngineState.Ready(EngineKind.CPU, loadedDevice, "${failed.label} failed during transcription; using CPU")
         t0 = System.nanoTime()
-        st = TranscribeNative.nativeRun(handle, pcm, pcm.size)
+        st = run(handle, pcm)
       }
       val ms = (System.nanoTime() - t0) / 1_000_000
       return toTranscript(st, handle, audioMs, ms, loadedKind!!, loadedDevice)
@@ -461,7 +516,8 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
     }
 
   /**
-   * Transcribes the bundled 5.4 s clip with every available engine. CPU runs first and is the reference; a backend
+   * Transcribes the bundled short clip (English: 5.4 s of JFK; Urdu: a 6.2 s FLEURS sentence) with every available
+   * engine. CPU runs first and is the reference; a backend
    * counts as correct when its transcript matches it exactly or differs by at most one word. Each backend gets a
    * warm-up run (GPU shader compilation, NPU session setup), then a timed run. The fastest correct one wins.
    *
@@ -471,8 +527,9 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
    */
   private fun benchmarkNow(spec: ModelSpec, progress: (String) -> Unit): BenchmarkResult {
     val path = ModelFiles.file(context, spec).path
-    val clip = context.assets.open(BENCH_CLIP).use { WavReader.readMono16k(it) }
-    val clip11 = context.assets.open(BENCH_CLIP_11S).use { WavReader.readMono16k(it) }
+    val (shortClip, longClip) = clipsFor(spec.lang)
+    val clip = context.assets.open(shortClip).use { WavReader.readMono16k(it) }
+    val clip11 = context.assets.open(longClip).use { WavReader.readMono16k(it) }
     val gap = FloatArray(PcmUtils.SAMPLE_RATE / 2)
     val clip33 = clip11 + gap + clip11 + gap + clip11
     var ref11 = ""
@@ -482,8 +539,14 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
     val entries = mutableListOf<BenchEntry>()
     var reference = ""
     for (kind in order) {
+      if (crashes(spec, kind)) {
+        entries += BenchEntry(kind, deviceFor(kind)?.name ?: "", 0, "", false, "skipped: crashes with this model")
+        AppLog.w(TAG, "benchmark ${kind.label}: skipped, it crashes with ${spec.id}")
+        progress("Benchmark: ${kind.label}: skipped (crashes with this model)")
+        continue
+      }
       progress("Benchmark: ${kind.label}…")
-      val err = open(path, kind, threads)
+      val err = open(path, kind, threads, spec.lang.code)
       if (err != null) {
         entries += BenchEntry(kind, deviceFor(kind)?.name ?: "", 0, "", false, "load failed: $err")
         AppLog.w(TAG, "benchmark ${kind.label}: load failed: $err")
@@ -495,11 +558,11 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
       }
       val device = loadedDevice
       try {
-        var st = TranscribeNative.nativeRun(handle, clip, clip.size) // warm-up
+        var st = run(handle, clip) // warm-up
         var ms = 0L
         if (st == TranscribeNative.OK) {
           val t0 = System.nanoTime()
-          st = TranscribeNative.nativeRun(handle, clip, clip.size)
+          st = run(handle, clip)
           ms = (System.nanoTime() - t0) / 1_000_000
         }
         val text = if (st == TranscribeNative.OK) TranscribeNative.nativeText(handle).toString(Charsets.UTF_8).trim() else ""
@@ -543,7 +606,7 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
 
   /** Transcribes with the current session and returns the text ("" on any error). Benchmark helper. */
   private fun runText(pcm: FloatArray): String {
-    val st = TranscribeNative.nativeRun(handle, pcm, pcm.size)
+    val st = run(handle, pcm)
     return if (st == TranscribeNative.OK) TranscribeNative.nativeText(handle).toString(Charsets.UTF_8).trim() else ""
   }
 
@@ -559,5 +622,21 @@ class AsrEngine(private val context: Context, private val settings: Settings) {
     private const val TAG = "engine"
     const val BENCH_CLIP = "bench/jfk-5s.wav"
     const val BENCH_CLIP_11S = "bench/jfk-11s.wav"
+    /** Urdu sentences from Google FLEURS (CC BY 4.0), test split: 6.2 s and 12.2 s. */
+    const val BENCH_CLIP_UR = "bench/fleurs-ur-6s.wav"
+    const val BENCH_CLIP_UR_12S = "bench/fleurs-ur-12s.wav"
+
+    /** Short timing clip and long check clip for [lang]. */
+    fun clipsFor(lang: Lang): Pair<String, String> =
+      when (lang) {
+        Lang.EN -> BENCH_CLIP to BENCH_CLIP_11S
+        Lang.UR -> BENCH_CLIP_UR to BENCH_CLIP_UR_12S
+      }
+
+    /** Length of the short benchmark clip, for the results table. */
+    /** Mel frames (10 ms each) of silence encoded after a short Urdu recording; chosen on FLEURS, see README. */
+    const val WHISPER_WINDOW_PAD_FRAMES = 200
+
+    fun shortClipLabel(lang: Lang): String = if (lang == Lang.UR) "6.2 s Urdu clip" else "5.4 s clip"
   }
 }

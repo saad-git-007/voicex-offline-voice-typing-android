@@ -40,6 +40,7 @@ import com.voicex.app.dot.DotAccessibilityService
 import com.voicex.app.engine.BenchmarkResult
 import com.voicex.app.model.DownloadState
 import com.voicex.app.model.ModelDownloadService
+import com.voicex.app.model.Lang
 import com.voicex.app.model.ModelFiles
 import com.voicex.app.model.ModelSpec
 
@@ -53,7 +54,7 @@ object Checks {
 
   fun overlay(c: Context) = AndroidSettings.canDrawOverlays(c)
 
-  fun model(app: VoiceXApp) = ModelFiles.isPresent(app, ModelSpec.of(app.settings.modelId))
+  fun model(app: VoiceXApp) = ModelFiles.isPresent(app, ModelSpec.active(app.settings))
 }
 
 private val STEPS = listOf("welcome", "mic", "notifications", "accessibility", "overlay", "model", "benchmark", "done")
@@ -175,7 +176,7 @@ private fun OverlayStep(ctx: Context, app: VoiceXApp) {
 @Composable
 fun ModelPicker(app: VoiceXApp) {
   var model by remember { mutableStateOf(app.settings.modelId) }
-  ModelSpec.entries.forEach { spec ->
+  ModelSpec.english.forEach { spec ->
     Row(
       Modifier.fillMaxWidth().selectable(selected = model == spec.id, onClick = { model = spec.id; app.settings.modelId = spec.id; app.engine.refreshBenchmark() }).padding(vertical = 2.dp),
       verticalAlignment = Alignment.CenterVertically,
@@ -190,11 +191,10 @@ fun ModelPicker(app: VoiceXApp) {
 }
 
 @Composable
-fun DownloadControls(app: VoiceXApp) {
+fun DownloadControls(app: VoiceXApp, spec: ModelSpec = ModelSpec.active(app.settings)) {
   val ctx = LocalContext.current
   val st by app.downloader.state.collectAsState()
   var wifiOnly by remember { mutableStateOf(app.settings.wifiOnly) }
-  val spec = ModelSpec.of(app.settings.modelId)
   val present = ModelFiles.isPresent(app, spec) || (st as? DownloadState.Done)?.spec == spec
   Row(verticalAlignment = Alignment.CenterVertically) {
     Text("Download on Wi-Fi only", modifier = Modifier.weight(1f))
@@ -228,9 +228,14 @@ fun DownloadControls(app: VoiceXApp) {
 @Composable
 private fun ModelStep(app: VoiceXApp) {
   SectionCard("Speech model") {
-    Muted("NVIDIA Parakeet Unified EN 0.6B, downloaded once from Hugging Face into VoiceX's private storage and checked against its SHA-256.")
-    ModelPicker(app)
-    DownloadControls(app)
+    if (app.settings.language == Lang.UR) {
+      Muted("Urdu uses OpenAI Whisper large-v3-turbo, downloaded once from Hugging Face into VoiceX's private storage and checked against its SHA-256.")
+      DownloadControls(app, ModelSpec.WHISPER_TURBO_Q5)
+    } else {
+      Muted("NVIDIA Parakeet Unified EN 0.6B, downloaded once from Hugging Face into VoiceX's private storage and checked against its SHA-256.")
+      ModelPicker(app)
+      DownloadControls(app)
+    }
   }
 }
 
@@ -254,7 +259,7 @@ fun BenchmarkPanel(app: VoiceXApp, autoStart: Boolean) {
 @Composable
 fun BenchmarkTable(r: BenchmarkResult) {
   Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-    Muted("5.4 s clip · reference (CPU): \"${r.reference}\"")
+    Muted("${com.voicex.app.engine.AsrEngine.shortClipLabel(ModelSpec.of(r.modelId).lang)} · reference (CPU): \"${r.reference}\"")
     r.entries.forEach { e ->
       val txt = when {
         e.correct -> "${e.kind.label}: ${e.ms} ms" + if (e.kind == r.winner) "  ← chosen" else ""

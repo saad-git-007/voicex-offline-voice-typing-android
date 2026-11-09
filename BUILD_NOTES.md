@@ -14,7 +14,7 @@ VoiceX 1.0.0 (versionCode 1) · built 2026-11-03 on Ubuntu 24.04 x86_64.
 | NDK | **30.0.16248370** (pinned in `app/build.gradle.kts`) |
 | CMake | 4.1.2 (SDK package) |
 | JDK | OpenJDK 17.0.20.1 |
-| transcribe.cpp | submodule `app/src/main/cpp/transcribe.cpp` @ `5700f127` (v0.4.1), **unmodified** |
+| transcribe.cpp | submodule `app/src/main/cpp/transcribe.cpp` @ `5700f127` (v0.4.1), unmodified except `patches/transcribe-whisper-short-window.patch` (applied at build time) |
 | Vulkan-Headers / SPIRV-Headers / OpenCL-Headers / OpenCL-ICD-Loader | `73814d00` / `fbf86836` / `82f60316` / `007c8e89` |
 | Hexagon SDK | 6.7.0.0 Community Edition (snapdragon-toolchain/hexagon-sdk), tools 21.0.04 |
 

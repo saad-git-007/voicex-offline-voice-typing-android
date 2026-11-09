@@ -2,6 +2,7 @@ package com.voicex.app
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.voicex.app.model.Lang
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -49,6 +50,11 @@ class Settings(context: Context) {
   var modelId: String
     get() = prefs.getString(K_MODEL, "Q5_K_M") ?: "Q5_K_M"
     set(v) = prefs.edit().putString(K_MODEL, v).apply()
+
+  /** Dictation language; switched from Settings or the dot's long-press menu. */
+  var language: Lang
+    get() = Lang.of(prefs.getString(K_LANGUAGE, "en"))
+    set(v) = prefs.edit().putString(K_LANGUAGE, v.code).apply()
 
   var wifiOnly: Boolean
     get() = prefs.getBoolean(K_WIFI_ONLY, true)
@@ -99,6 +105,25 @@ class Settings(context: Context) {
   fun setBenchmarkJson(modelId: String, json: String?) = prefs.edit().apply { if (json == null) remove("bench_$modelId") else putString("bench_$modelId", json) }.apply()
 
   /** Saved dot position: x (px from the left) and dy (px between the dot's top and the keyboard's top). */
+  /**
+   * "modelFile|KIND" while a native call runs on an accelerator; cleared when it returns. Still set when the next
+   * process starts = that call took the app down. Written with commit() so it is on disk before the native call.
+   */
+  var nativeInFlight: String?
+    get() = prefs.getString(K_IN_FLIGHT, null)
+    set(v) {
+      prefs.edit().apply { if (v == null) remove(K_IN_FLIGHT) else putString(K_IN_FLIGHT, v) }.commit()
+    }
+
+  /** Accelerators that crashed the app with [modelFile] in this app version (EngineKind names). */
+  fun crashedEngines(modelFile: String): Set<String> = prefs.getStringSet(crashedKey(modelFile), null) ?: emptySet()
+
+  fun addCrashedEngine(modelFile: String, kind: String) {
+    prefs.edit().putStringSet(crashedKey(modelFile), crashedEngines(modelFile) + kind).commit()
+  }
+
+  private fun crashedKey(modelFile: String) = "crashed_${BuildConfig.VERSION_CODE}_$modelFile"
+
   fun dotOffset(landscape: Boolean): Pair<Int, Int>? {
     val o = if (landscape) "land" else "port"
     if (!prefs.contains("dot_x_$o")) return null
@@ -120,6 +145,7 @@ class Settings(context: Context) {
     const val K_AUTO_PASTE = "auto_paste"
     const val K_TRAILING_SPACE = "trailing_space"
     const val K_MODEL = "model"
+    const val K_LANGUAGE = "language"
     const val K_WIFI_ONLY = "wifi_only"
     const val K_BACKEND = "backend"
     const val K_THREADS = "threads"
@@ -130,5 +156,6 @@ class Settings(context: Context) {
     const val K_HISTORY = "history"
     const val K_SETUP_DONE = "setup_done"
     const val K_FGS_BLOCKED = "fgs_blocked"
+    const val K_IN_FLIGHT = "native_in_flight"
   }
 }

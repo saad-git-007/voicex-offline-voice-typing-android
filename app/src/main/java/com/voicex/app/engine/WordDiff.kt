@@ -4,9 +4,14 @@ import java.util.Locale
 
 /** Word-level comparison used by the benchmark's correctness check (unit-tested in WordDiffTest). */
 object WordDiff {
-  /** Lower-case words with punctuation stripped ("Americans," -> "americans"). Apostrophes are kept. */
+  /**
+   * Lower-case words with punctuation stripped ("Americans," -> "americans"). Apostrophes are kept. Combining marks
+   * and format characters are dropped first, so Urdu vowel marks (zer, pesh, shadda) and zero-width joiners don't
+   * split a word ("جِن" -> "جن").
+   */
   fun words(text: String): List<String> =
     text.lowercase(Locale.ROOT)
+      .replace(Regex("[\\p{M}\\p{Cf}]+"), "")
       .replace(Regex("[^\\p{L}\\p{N}' ]+"), " ")
       .split(' ')
       .map { it.trim('\'') }

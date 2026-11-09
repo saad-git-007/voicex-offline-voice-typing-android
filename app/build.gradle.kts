@@ -5,8 +5,8 @@ plugins {
   alias(libs.plugins.compose.compiler)
 }
 
-val voicexVersionName = "1.0.0"
-val voicexVersionCode = 1
+val voicexVersionName = "1.1.0"
+val voicexVersionCode = 2
 
 // Optional accelerator SDKs, see scripts/fetch-deps.sh. Each backend is switched on when its files exist.
 val thirdParty = rootProject.file("third_party")
@@ -131,7 +131,7 @@ dependencies {
 
 // Host JNI smoke test: point it at a host build of libvoicex_jni.so + the model (see README, "Tests")
 tasks.withType<Test>().configureEach {
-  listOf("voicex.hostLib", "voicex.model", "voicex.clip").forEach { k ->
+  listOf("voicex.hostLib", "voicex.model", "voicex.urModel", "voicex.clip").forEach { k ->
     System.getProperty(k)?.let { systemProperty(k, it) }
   }
 }

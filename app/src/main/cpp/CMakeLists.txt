@@ -1,7 +1,7 @@
 # VoiceX native build: transcribe.cpp (git submodule) + a small JNI layer.
 #
 # transcribe.cpp has no official Android build. Everything Android-specific is set from THIS file;
-# the submodule itself is unmodified (see BUILD_NOTES.md, "CMake changes").
+# the submodule is unmodified except for the patches in /patches, applied below at configure time.
 cmake_minimum_required(VERSION 3.22)
 project(voicex VERSION 1.0.0 LANGUAGES C CXX)
 
@@ -10,6 +10,23 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(TRANSCRIBE_SRC ${CMAKE_CURRENT_LIST_DIR}/transcribe.cpp)
 set(THIRD_PARTY    ${CMAKE_CURRENT_LIST_DIR}/../../../../third_party)
+
+# --- VoiceX patches to the submodule ---------------------------------------------------------------
+# transcribe-whisper-short-window.patch: optional short encoder window for Whisper (Urdu), see README.
+# Applied once; a tree that already has it (reverse-check passes) is left alone.
+find_package(Git REQUIRED)
+foreach(patch transcribe-whisper-short-window.patch)
+  set(patch_file ${CMAKE_CURRENT_LIST_DIR}/../../../../patches/${patch})
+  execute_process(COMMAND ${GIT_EXECUTABLE} apply --reverse --check ${patch_file}
+    WORKING_DIRECTORY ${TRANSCRIBE_SRC} RESULT_VARIABLE already OUTPUT_QUIET ERROR_QUIET)
+  if(NOT already EQUAL 0)
+    execute_process(COMMAND ${GIT_EXECUTABLE} apply ${patch_file} WORKING_DIRECTORY ${TRANSCRIBE_SRC} RESULT_VARIABLE applied)
+    if(NOT applied EQUAL 0)
+      message(FATAL_ERROR "could not apply ${patch} to transcribe.cpp")
+    endif()
+    message(STATUS "applied ${patch}")
+  endif()
+endforeach()
 
 option(VOICEX_VULKAN  "Build the ggml Vulkan backend (Adreno GPU)"     ON)
 option(VOICEX_OPENCL  "Build the ggml OpenCL backend (Adreno kernels)" OFF)

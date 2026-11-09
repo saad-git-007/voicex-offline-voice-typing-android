@@ -4,6 +4,7 @@ import android.app.Application
 import com.voicex.app.dictation.DictationController
 import com.voicex.app.engine.AsrEngine
 import com.voicex.app.history.HistoryStore
+import com.voicex.app.model.Lang
 import com.voicex.app.model.ModelDownloader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -32,5 +33,13 @@ class VoiceXApp : Application() {
     history = HistoryStore(this, settings)
     dictation = DictationController(this)
     Notifications.createChannels(this)
+  }
+
+  /** Switches the dictation language (Settings or the dot's menu). The dot service preloads the new model. */
+  fun switchLanguage(lang: Lang) {
+    if (settings.language == lang) return
+    settings.language = lang
+    engine.refreshBenchmark()
+    AppLog.i("app", "dictation language: ${lang.label}")
   }
 }

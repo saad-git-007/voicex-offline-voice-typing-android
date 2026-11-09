@@ -1,0 +1,41 @@
+diff --git a/src/arch/whisper/model.cpp b/src/arch/whisper/model.cpp
+index 75cb2660..1ed27ef8 100644
+--- a/src/arch/whisper/model.cpp
++++ b/src/arch/whisper/model.cpp
+@@ -1740,9 +1740,25 @@ transcribe_status whisper_run(transcribe_session *          session,
+         // Slice + zero-pad the mel window to n_mel_frames_per_chunk (pad after
+         // the real frames, matching HF's F.pad). seek_num_frames is the real
+         // (unpadded) frame count and the max `seek` can advance per iteration.
+-        std::vector<float> chunk_mel(static_cast<size_t>(n_mels) * static_cast<size_t>(n_mel_frames_per_chunk), 0.0f);
++        //
++        // VoiceX: TRANSCRIBE_WHISPER_SHORT_WINDOW_PAD_FRAMES=<n> encodes a
++        // short-form clip over its real length + n mel frames (rounded up to
++        // an even count) instead of the padded 30 s, like whisper.cpp's
++        // audio_ctx. The encoder's cost scales with the window, so a 3 s clip
++        // encodes several times faster. Unset = upstream behaviour.
++        int window_frames = n_mel_frames_per_chunk;
++        if (is_short_form && seek == 0) {
++            if (const char * pad_env = transcribe::env::str("TRANSCRIBE_WHISPER_SHORT_WINDOW_PAD_FRAMES")) {
++                const int pad       = std::max(0, std::atoi(pad_env));
++                const int real      = static_cast<int>((static_cast<int64_t>(n_samples) + 159) / 160);
++                int       w         = real + pad;
++                w                   = (w + 1) & ~1;
++                window_frames       = std::min(n_mel_frames_per_chunk, std::max(2, w));
++            }
++        }
++        std::vector<float> chunk_mel(static_cast<size_t>(n_mels) * static_cast<size_t>(window_frames), 0.0f);
+         const int          seek_num_frames = std::min(total_mel_frames - seek, n_mel_frames_per_chunk);
+-        const int          frames_avail    = seek_num_frames;
++        const int          frames_avail    = std::min(seek_num_frames, window_frames);
+         std::memcpy(chunk_mel.data(), &cc->mel_buf[static_cast<size_t>(seek) * static_cast<size_t>(n_mels)],
+                     static_cast<size_t>(frames_avail) * static_cast<size_t>(n_mels) * sizeof(float));
+ 
+@@ -1750,7 +1766,7 @@ transcribe_status whisper_run(transcribe_session *          session,
+         int           T_enc_local = 0;
+         const int64_t t_enc_start = ggml_time_us();
+         if (const transcribe_status st =
+-                run_whisper_encoder_on_window(cc, cm, chunk_mel.data(), n_mels, n_mel_frames_per_chunk,
++                run_whisper_encoder_on_window(cc, cm, chunk_mel.data(), n_mels, window_frames,
+                                               /*allow_dumps=*/is_first_chunk, T_enc_local);
+             st != TRANSCRIBE_OK) {
+             return st;

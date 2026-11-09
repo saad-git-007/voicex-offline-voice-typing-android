@@ -55,6 +55,8 @@ import com.voicex.app.audio.RecordingCap
 import com.voicex.app.engine.EngineKind
 import com.voicex.app.engine.EngineState
 import com.voicex.app.engine.Transcript
+import com.voicex.app.model.Lang
+import androidx.compose.foundation.selection.selectable
 import com.voicex.app.model.ModelFiles
 import com.voicex.app.model.ModelSpec
 import com.voicex.app.output.ClipboardWriter
@@ -77,8 +79,10 @@ fun HomeScreen(app: VoiceXApp, go: (Screen) -> Unit) {
       SectionCard("Status") {
         StatusLine(Checks.accessibility(ctx), if (Checks.accessibility(ctx)) "Dictation dot is on" else "Dictation dot is off (accessibility service)")
         StatusLine(Checks.mic(ctx), if (Checks.mic(ctx)) "Microphone allowed" else "Microphone not allowed")
-        val spec = ModelSpec.of(app.settings.modelId)
-        StatusLine(Checks.model(app), if (Checks.model(app)) "Model: ${spec.label}" else "Model not downloaded")
+        val spec = ModelSpec.active(app.settings)
+        val lang = app.settings.language
+        StatusLine(true, "Language: " + if (lang == Lang.EN) lang.label else "${lang.native} (${lang.label})")
+        StatusLine(Checks.model(app), if (Checks.model(app)) "Model: ${spec.label}" else "${lang.label} model not downloaded")
         val e = engine
         StatusLine(e !is EngineState.Failed, engineText(e, app))
         if (e is EngineState.Ready && e.note != null) Muted(e.note)
@@ -126,19 +130,46 @@ fun SettingsScreen(app: VoiceXApp, go: (Screen) -> Unit) {
         if (!it) app.history.clear()
       }
     }
-    SectionCard("Model") {
+    SectionCard("Language") {
+      var lang by remember { mutableStateOf(s.language) }
+      Lang.entries.forEach { l ->
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().selectable(selected = lang == l, onClick = { lang = l; app.switchLanguage(l) })) {
+          RadioButton(selected = lang == l, onClick = { lang = l; app.switchLanguage(l) })
+          Text(if (l == Lang.EN) l.label else "${l.native}  ·  ${l.label}")
+        }
+      }
+      Muted("Switch quickly: long-press the dot and pick English or اردو. Each language has its own model; switching loads it (a second or two).")
+      HorizontalDivider()
+      Text("Urdu model", fontWeight = FontWeight.SemiBold)
+      Muted("OpenAI Whisper large-v3-turbo (q5_0, MIT licence), 574 MB.")
+      var urRefresh by remember { mutableStateOf(0) }
+      androidx.compose.runtime.key(urRefresh) {
+        DownloadControls(app, ModelSpec.WHISPER_TURBO_Q5)
+        if (ModelFiles.isPresent(app, ModelSpec.WHISPER_TURBO_Q5)) {
+          TextButton(onClick = {
+            scope.launch {
+              if (s.language == Lang.UR) app.engine.release()
+              app.downloader.delete(ModelSpec.WHISPER_TURBO_Q5)
+              app.downloader.reset()
+              urRefresh++
+            }
+          }) { Text("Delete the Urdu model (574 MB)") }
+        }
+      }
+    }
+    SectionCard("English model") {
       ModelPicker(app)
-      DownloadControls(app)
+      DownloadControls(app, ModelSpec.forLang(Lang.EN, s))
       var refresh by remember { mutableStateOf(0) }
       androidx.compose.runtime.key(refresh) {
-        ModelSpec.entries.filter { it.id != s.modelId && ModelFiles.isPresent(app, it) }.forEach { other ->
+        ModelSpec.english.filter { it.id != s.modelId && ModelFiles.isPresent(app, it) }.forEach { other ->
           TextButton(onClick = { app.downloader.delete(other); refresh++ }) { Text("Delete ${other.label} to free space") }
         }
-        val cur = ModelSpec.of(s.modelId)
+        val cur = ModelSpec.forLang(Lang.EN, s)
         if (ModelFiles.isPresent(app, cur)) {
           TextButton(onClick = {
             scope.launch {
-              app.engine.release()
+              if (s.language == Lang.EN) app.engine.release()
               app.downloader.delete(cur)
               app.downloader.reset()
               refresh++
@@ -185,7 +216,7 @@ fun SettingsScreen(app: VoiceXApp, go: (Screen) -> Unit) {
       FilledTonalButton(onClick = { go(Screen.Logs) }) { Text("Logs (activity & crashes)") }
     }
     SectionCard("About") {
-      Muted("VoiceX ${com.voicex.app.BuildConfig.VERSION_NAME} · on-device speech recognition by NVIDIA Parakeet Unified EN 0.6B via transcribe.cpp (MIT).")
+      Muted("VoiceX ${com.voicex.app.BuildConfig.VERSION_NAME} · on-device speech recognition via transcribe.cpp (MIT): NVIDIA Parakeet Unified EN 0.6B for English, OpenAI Whisper large-v3-turbo (MIT) for Urdu. Urdu benchmark clips from Google FLEURS (CC BY 4.0).")
     }
   }
 }

@@ -20,6 +20,7 @@ import org.junit.Test
 class JniSmokeTest {
   private val lib = System.getProperty("voicex.hostLib")
   private val model = System.getProperty("voicex.model")
+  private val urModel = System.getProperty("voicex.urModel")
 
   @Test fun transcribesBundledClipThroughJni() {
     assumeTrue("set -Dvoicex.hostLib and -Dvoicex.model to run", lib != null && model != null)
@@ -40,13 +41,39 @@ class JniSmokeTest {
     try {
       assertEquals("CPU", TranscribeNative.nativeBackend(h))
       val pcm = File("src/main/assets/bench/jfk-5s.wav").inputStream().let { WavReader.readMono16k(it) }
-      val st = TranscribeNative.nativeRun(h, pcm, pcm.size)
+      val st = TranscribeNative.nativeRun(h, pcm, pcm.size, "en")
       assertEquals(TranscribeNative.nativeStatusString(st), TranscribeNative.OK, st)
       val text = TranscribeNative.nativeText(h).toString(Charsets.UTF_8)
       println("JNI transcript: \"$text\"  timings(ms)=${TranscribeNative.nativeTimings(h).toList()}")
       assertTrue(text, WordDiff.matches("And so, my fellow Americans, ask not.", text))
       // invalid input is rejected cleanly
-      assertEquals(1 /* INVALID_ARG */, TranscribeNative.nativeRun(h, pcm, 0))
+      assertEquals(1 /* INVALID_ARG */, TranscribeNative.nativeRun(h, pcm, 0, "en"))
+    } finally {
+      TranscribeNative.nativeClose(h)
+    }
+  }
+
+  /** Urdu: Whisper large-v3-turbo (whisper.cpp .bin) through the same JNI layer, with the "ur" language hint. */
+  @Test fun transcribesUrduClipThroughJni() {
+    assumeTrue("set -Dvoicex.hostLib and -Dvoicex.urModel to run", lib != null && urModel != null)
+    TranscribeNative.load(lib)
+    TranscribeNative.nativeInitBackends(null)
+    val out = LongArray(1)
+    val st = TranscribeNative.nativeOpen(urModel!!, -1, 8, out)
+    assertEquals("open failed: ${TranscribeNative.nativeStatusString(st)}", TranscribeNative.OK, st)
+    val h = out[0]
+    try {
+      val pcm = File("src/main/assets/bench/fleurs-ur-6s.wav").inputStream().let { WavReader.readMono16k(it) }
+      val rs = TranscribeNative.nativeRun(h, pcm, pcm.size, "ur")
+      assertEquals(TranscribeNative.nativeStatusString(rs), TranscribeNative.OK, rs)
+      val text = TranscribeNative.nativeText(h).toString(Charsets.UTF_8).trim()
+      println("JNI Urdu transcript: \"$text\"")
+      // FLEURS reference: "فلپائنی فوٹوگرافروں کے ساتھ چھے اغوا شدگان کو جلد رہا کر دیا گیا تھا، جن میں بچے اور بوڑھے شامل تھے۔"
+      assertTrue("Urdu (Arabic-script) output: $text", text.count { it in '\u0600'..'\u06FF' } > text.length / 2)
+      val ref = "فلپائنی فوٹوگرافروں کے ساتھ چھے اغوا شدگان کو جلد رہا کر دیا گیا تھا جن میں بچے اور بوڑھے شامل تھے"
+      val d = WordDiff.distance(ref, text)
+      println("word errors vs FLEURS reference: $d of ${WordDiff.words(ref).size}")
+      assertTrue("too far from the reference ($d word errors): $text", d <= WordDiff.words(ref).size / 2)
     } finally {
       TranscribeNative.nativeClose(h)
     }

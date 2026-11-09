@@ -34,7 +34,7 @@ class ModelDownloadService : Service() {
       stopSelf()
       return START_NOT_STICKY
     }
-    val spec = ModelSpec.of(intent?.getStringExtra(EXTRA_MODEL) ?: app.settings.modelId)
+    val spec = intent?.getStringExtra(EXTRA_MODEL)?.let { ModelSpec.of(it) } ?: ModelSpec.active(app.settings)
     startForeground(Notifications.ID_DOWNLOAD, progressNotification("Starting download…", 0, true), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
     if (job?.isActive == true) return START_NOT_STICKY
 

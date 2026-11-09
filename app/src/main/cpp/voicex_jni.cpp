@@ -235,7 +235,8 @@ JNIEXPORT jstring JNICALL JNI_FN(nativeBackend)(JNIEnv * env, jobject, jlong h) 
 
 // Batch transcription of 16 kHz mono float PCM in [-1, 1]. Returns a transcribe_status. The partial
 // text after OUTPUT_TRUNCATED / OUTPUT_REPETITION / ABORTED is still readable with nativeText.
-JNIEXPORT jint JNICALL JNI_FN(nativeRun)(JNIEnv * env, jobject, jlong h, jfloatArray jpcm, jint n) {
+// jlang: language hint ("en", "ur", ...); null = the model's default (autodetect for Whisper).
+JNIEXPORT jint JNICALL JNI_FN(nativeRun)(JNIEnv * env, jobject, jlong h, jfloatArray jpcm, jint n, jstring jlang) {
     Engine * e = from_handle(h);
     if (e == nullptr || e->session == nullptr || jpcm == nullptr) {
         return TRANSCRIBE_ERR_INVALID_ARG;
@@ -251,7 +252,8 @@ JNIEXPORT jint JNICALL JNI_FN(nativeRun)(JNIEnv * env, jobject, jlong h, jfloatA
     e->abort.store(false);
     struct transcribe_run_params rp;
     transcribe_run_params_init(&rp);
-    rp.language   = "en";
+    const std::string lang = jlang != nullptr ? jstr(env, jlang) : std::string();
+    rp.language   = lang.empty() ? nullptr : lang.c_str();
     rp.timestamps = TRANSCRIBE_TIMESTAMPS_NONE;
     transcribe_status st = transcribe_run(e->session, pcm.data(), n, &rp);
     if (st == TRANSCRIBE_ERR_UNSUPPORTED_TIMESTAMPS || st == TRANSCRIBE_ERR_UNSUPPORTED_LANGUAGE) {

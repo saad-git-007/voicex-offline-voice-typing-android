@@ -38,6 +38,7 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
 
   private lateinit var wm: WindowManager
   private var dot: DotView? = null
+  private var menu: DotMenu? = null
   private var params: WindowManager.LayoutParams? = null
   private var attached = false
   private var useAppOverlay = false
@@ -60,13 +61,14 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
     wm = getSystemService(WindowManager::class.java)
     useAppOverlay = app.settings.fgsBlockedSeen && AndroidSettings.canDrawOverlays(this)
     dot = DotView(this, this).also { applySettings(it) }
+    menu = DotMenu(this, wm, onLanguage = ::pickLanguage, onHide = ::hideUntilNextKeyboard)
     app.dictation.output = this
     stateJob = app.scope.launch { app.dictation.state.collect { onDictationState(it) } }
     settingsJob = app.scope.launch {
       app.settings.changes.collect { key ->
         dot?.let { applySettings(it) }
         if (key == Settings.K_DOT_SIZE) app.settings.resetDotOffsets()
-        if (key == Settings.K_KEEP_LOADED || key == Settings.K_MODEL || key == Settings.K_BACKEND || key == Settings.K_THREADS) maybePreload()
+        if (key == Settings.K_KEEP_LOADED || key == Settings.K_MODEL || key == Settings.K_BACKEND || key == Settings.K_THREADS || key == Settings.K_LANGUAGE) maybePreload()
         refresh()
       }
     }
@@ -79,12 +81,13 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
     v.dotSizePx = (s.dotSizeDp * resources.displayMetrics.density).toInt()
     v.idleAlpha = s.dotOpacity
     v.hapticsEnabled = s.haptics
+    v.badgeSource = { app.settings.language.badge }
   }
 
   /** Default lifecycle: load at service start and keep resident. */
   private fun maybePreload() {
     if (!app.settings.keepLoaded) return
-    if (!ModelFiles.isPresent(this, ModelSpec.of(app.settings.modelId))) return
+    if (!ModelFiles.isPresent(this, ModelSpec.active(app.settings))) return
     app.scope.launch { runCatching { app.engine.ensureLoaded() }.onFailure { AppLog.w(TAG, "preload failed: $it") } }
   }
 
@@ -113,7 +116,7 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
 
   private fun onKeyboardOpened() {
     unloadJob?.cancel()
-    if (!app.settings.keepLoaded && ModelFiles.isPresent(this, ModelSpec.of(app.settings.modelId))) {
+    if (!app.settings.keepLoaded && ModelFiles.isPresent(this, ModelSpec.active(app.settings))) {
       app.scope.launch { runCatching { app.engine.ensureLoaded() } }
     }
   }
@@ -132,6 +135,7 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
     val v = dot ?: return
     val prev = v.state
     v.state = s
+    if (s !is DotState.Idle && s !is DotState.Info) menu?.dismiss()
     when {
       s is DotState.Recording && prev !is DotState.Recording -> v.haptic(DotView.HAPTIC_TICK)
       s is DotState.Done -> v.haptic(DotView.HAPTIC_CONFIRM)
@@ -147,6 +151,7 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
     val busy = s is DotState.Recording || s is DotState.Transcribing || s is DotState.Done || s is DotState.Info
     val show = (keyboardVisible && !hiddenUntilNextKeyboard) || busy
     if (!show) {
+      menu?.dismiss()
       detach()
       return
     }
@@ -201,6 +206,10 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
 
   // ---- DotView.Listener -------------------------------------------------------------------------------------
   override fun onTap() {
+    if (menu?.isShowing == true) {
+      menu?.dismiss()
+      return
+    }
     when (val s = app.dictation.state.value) {
       is DotState.Error -> {
         app.dictation.dismiss()
@@ -217,16 +226,32 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
         app.dictation.cancel()
       }
       DotState.Idle, is DotState.Info, is DotState.Error -> {
-        dot?.haptic(DotView.HAPTIC_LONG)
+        val v = dot ?: return
+        val pos = dotPos ?: return
+        v.haptic(DotView.HAPTIC_LONG)
         app.dictation.dismiss()
-        hiddenUntilNextKeyboard = true
-        refresh()
+        menu?.show(app.settings.language, pos.x, pos.y, v.dotSizePx, params?.type ?: WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY)
       }
       else -> Unit
     }
   }
 
+  private fun pickLanguage(lang: com.voicex.app.model.Lang) {
+    dot?.haptic(DotView.HAPTIC_TICK)
+    app.switchLanguage(lang)
+    dot?.invalidate()
+    val ready = ModelFiles.isPresent(this, ModelSpec.active(app.settings))
+    app.dictation.showInfo(if (ready) lang.native else "${lang.label} model not downloaded", if (ready) 1200 else 2500)
+  }
+
+  private fun hideUntilNextKeyboard() {
+    dot?.haptic(DotView.HAPTIC_LONG)
+    hiddenUntilNextKeyboard = true
+    refresh()
+  }
+
   override fun onDrag(dx: Int, dy: Int) {
+    menu?.dismiss()
     dragging = true
     val v = dot ?: return
     val cur = dotPos ?: return
@@ -293,6 +318,7 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
     stateJob?.cancel()
     settingsJob?.cancel()
     unloadJob?.cancel()
+    menu?.dismiss()
     if (app.dictation.output === this) app.dictation.output = null
     if (app.dictation.state.value is DotState.Recording) app.dictation.cancel()
     detach()
