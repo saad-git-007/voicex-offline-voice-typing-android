@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VoiceX</string>
+    <string name="a11y_service_label">VoiceX dictation dot</string>
+    <string name="a11y_service_summary">Shows a small dot above the keyboard. Tap it to dictate; the text is copied to the clipboard.</string>
+    <string name="a11y_service_description">VoiceX uses this service only to notice when a keyboard is open, so it can show its dictation dot just above it.\n\nPrivacy: VoiceX does not read, store or send anything on your screen. It looks only at whether a keyboard window is open and where it is. Speech is transcribed entirely on this phone and never leaves it.\n\nThe one exception is the optional Auto-paste setting (off by default): after you dictate, VoiceX inserts the text into the field you are typing in. Nothing else is read or kept.</string>
+</resources>

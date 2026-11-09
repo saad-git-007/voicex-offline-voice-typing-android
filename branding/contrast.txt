@@ -1,0 +1,7 @@
+ 5.33:1  white on violet #6C4CF1
+ 4.69:1  white on blue #2F6BF0
+ 3.85:1  white on #3A7BFF (spec blue)
+ 3.38:1  violet dot on ink #16132E
+ 3.84:1  blue dot on ink
+18.00:1  white on ink
+ 8.66:1  #B9A8FF (dark-theme primary) on ink

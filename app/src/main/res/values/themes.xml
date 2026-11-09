@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.VoiceX" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/voicex_surface_light</item>
+    </style>
+
+    <!-- Android 12+ SplashScreen API (androidx core-splashscreen): the logo mark on ink -->
+    <style name="Theme.VoiceX.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/voicex_ink</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/voicex_mark</item>
+        <item name="windowSplashScreenAnimationDuration">300</item>
+        <item name="postSplashScreenTheme">@style/Theme.VoiceX</item>
+    </style>
+</resources>

@@ -1,0 +1,13 @@
+.gradle/
+build/
+/app/.cxx/
+/local.properties
+/.models/
+/keystore/
+/keystore.properties
+*.iml
+.idea/
+/dist/
+# local-only: machine notes and dependency checkouts/symlinks (scripts/fetch-deps.sh recreates third_party/)
+/ANDROID-SETUP.md
+/third_party/

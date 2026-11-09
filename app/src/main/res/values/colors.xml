@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- VoiceX brand tokens (same values in branding/make_icons.py and ui/theme/Color.kt).
+     White on violet 5.33:1, white on blue 4.69:1 (WCAG AA for text). See branding/contrast.txt. -->
+<resources>
+    <color name="voicex_violet">#FF6C4CF1</color>
+    <color name="voicex_blue">#FF2F6BF0</color>
+    <color name="voicex_ink">#FF16132E</color>
+    <color name="voicex_lavender">#FFB9A8FF</color>
+    <color name="voicex_surface_light">#FFF8F6FF</color>
+</resources>

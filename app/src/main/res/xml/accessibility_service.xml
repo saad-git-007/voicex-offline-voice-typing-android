@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Minimal on purpose: window-change events only, and the interactive-window list (to find the keyboard window).
+     canRetrieveWindowContent is required for getWindows() and for the optional auto-paste; VoiceX never reads
+     on-screen text otherwise. -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowsChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagRetrieveInteractiveWindows"
+    android:canRetrieveWindowContent="true"
+    android:notificationTimeout="50"
+    android:isAccessibilityTool="false"
+    android:summary="@string/a11y_service_summary"
+    android:description="@string/a11y_service_description"
+    android:settingsActivity="com.voicex.app.ui.MainActivity" />

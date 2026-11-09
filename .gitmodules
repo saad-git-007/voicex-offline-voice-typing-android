@@ -1,0 +1,3 @@
+[submodule "app/src/main/cpp/transcribe.cpp"]
+	path = app/src/main/cpp/transcribe.cpp
+	url = https://github.com/handy-computer/transcribe.cpp
