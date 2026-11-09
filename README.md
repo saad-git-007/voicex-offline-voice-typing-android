@@ -17,9 +17,21 @@
   <img alt="On-device" src="https://img.shields.io/badge/speech%20recognition-100%25%20on--device-6C4CF1">
 </p>
 
-<p align="center">
-  <img src="docs/screenshots/dictation-flow.png" alt="Tap the dot, speak, tap again: the transcript is pasted into the field">
-</p>
+<p align="center"><sub>Swipe or scroll sideways to see more ➜</sub></p>
+<table>
+<tr>
+<td align="center" valign="top"><img src="docs/screenshots/home.jpg" width="240" alt="Status at a glance"><br><sub><b>Status at a glance</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
+<td align="center" valign="top"><img src="docs/screenshots/dot.jpg" width="240" alt="A dot above any keyboard"><br><sub><b>A dot above any keyboard</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
+<td align="center" valign="top"><img src="docs/screenshots/recording.jpg" width="240" alt="Tap to talk"><br><sub><b>Tap to talk</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
+<td align="center" valign="top"><img src="docs/screenshots/transcribing.jpg" width="240" alt="Transcribed on the phone"><br><sub><b>Transcribed on the phone</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
+<td align="center" valign="top"><img src="docs/screenshots/pasted.jpg" width="240" alt="Pasted into the text field"><br><sub><b>Pasted into the text field</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
+<td align="center" valign="top"><img src="docs/screenshots/s23-ultra-benchmark.jpg" width="240" alt="Benchmark on a Galaxy S23 Ultra"><br><sub><b>Benchmark on a Galaxy S23 Ultra</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
+<td align="center" valign="top"><img src="docs/screenshots/settings.jpg" width="240" alt="Settings"><br><sub><b>Settings</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
+<td align="center" valign="top"><img src="docs/screenshots/setup-privacy.jpg" width="240" alt="Guided setup, privacy first"><br><sub><b>Guided setup, privacy first</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
+<td align="center" valign="top"><img src="docs/screenshots/setup-dot.jpg" width="240" alt="What the dot service can see"><br><sub><b>What the dot service can see</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
+<td align="center" valign="top"><img src="docs/screenshots/setup-model.jpg" width="240" alt="Verified model download"><br><sub><b>Verified model download</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
+</tr>
+</table>
 
 ---
 
@@ -56,14 +68,8 @@ An earlier run on the same phone (before the long-audio check existed) measured 
 **What this means in practice:** short dictations (up to 11 s) are transcribed on the NPU at about 12× real time, so a 10-second sentence is ready in well under a second. On the S23 the NPU returned an empty transcript for a real 30 s dictation, which is what led to the long-audio check: longer recordings now go to an engine verified for that length (the CPU here), and any empty accelerator result is redone on the CPU.
 
 <p align="center">
-  <img src="docs/screenshots/s23-ultra-benchmark.png" width="360" alt="Benchmark results on a Galaxy S23 Ultra">
+  <img src="docs/screenshots/s23-ultra-benchmark.jpg" width="300" alt="Benchmark results on a Galaxy S23 Ultra">
 </p>
-
-## Screenshots
-
-| Settings | Guided setup (restricted settings) |
-|---|---|
-| <img src="docs/screenshots/settings.png" width="320" alt="Settings"> | <img src="docs/screenshots/setup-accessibility.png" width="320" alt="Accessibility setup step"> |
 
 ## Install
 
@@ -80,6 +86,13 @@ An earlier run on the same phone (before the long-audio check existed) measured 
 
 ## Using the dot
 
+<p align="center">
+  <img src="docs/screenshots/dot.jpg" width="200" alt="The dot above the keyboard">
+  <img src="docs/screenshots/recording.jpg" width="200" alt="Recording">
+  <img src="docs/screenshots/transcribing.jpg" width="200" alt="Transcribing">
+  <img src="docs/screenshots/pasted.jpg" width="200" alt="Pasted into the field">
+</p>
+
 | Gesture | Action |
 |---|---|
 | Tap (grey) | Start recording |
@@ -90,6 +103,11 @@ An earlier run on the same phone (before the long-audio check existed) measured 
 | Orange dot | Something needs attention (no model, mic denied…): tap it to fix |
 
 ## Privacy
+
+<p align="center">
+  <img src="docs/screenshots/setup-privacy.jpg" width="230" alt="Privacy in the setup guide">
+  <img src="docs/screenshots/setup-dot.jpg" width="230" alt="What the dot service can see">
+</p>
 
 - The accessibility service listens only for **window changes** and reads only the **type and position** of windows, to find the keyboard. It does **not** read, store or send on-screen text.
 - The single exception is the optional **auto-paste** (off by default). Right after a dictation you started, it inserts the text into the focused field: `ACTION_PASTE` first, then `ACTION_SET_TEXT` at the cursor. Password fields are never rewritten.
