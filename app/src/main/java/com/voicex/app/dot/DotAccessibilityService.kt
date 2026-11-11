@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.graphics.Rect
+import android.os.SystemClock
 import android.provider.Settings as AndroidSettings
 import com.voicex.app.AppLog
 import android.view.Gravity
@@ -226,6 +227,11 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
   }
 
   // ---- DotView.Listener -------------------------------------------------------------------------------------
+  /** When the last single tap started a recording from idle; a double-tap right after it discards that recording. */
+  private var tapStartedAt = 0L
+  /** True while a recording started by press-and-hold is running; lifting the finger transcribes it. */
+  private var holdRecording = false
+
   override fun onTap() {
     if (menu?.isShowing == true) {
       menu?.dismiss()
@@ -236,28 +242,62 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
         app.dictation.dismiss()
         startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra(MainActivity.EXTRA_STEP, s.kind.setupStep))
       }
-      else -> app.dictation.toggle()
+      else -> {
+        val wasIdle = !app.dictation.isBusy
+        app.dictation.toggle()
+        tapStartedAt = if (wasIdle && app.dictation.state.value is DotState.Recording) SystemClock.uptimeMillis() else 0L
+      }
     }
   }
 
+  /**
+   * Double-tap: the language menu, or (one language downloaded) hide until the next keyboard. The first tap has
+   * already started a recording; it is discarded, unheard. A double-tap that doesn't follow a recording start
+   * (e.g. tap to stop, tap again) is just a second tap.
+   */
+  override fun onDoubleTap() {
+    val firstTapStarted = tapStartedAt != 0L && SystemClock.uptimeMillis() - tapStartedAt < DOUBLE_TAP_WINDOW_MS
+    tapStartedAt = 0L
+    if (!firstTapStarted) return onTap()
+    app.dictation.cancel()
+    openLanguageMenuOrHide()
+  }
+
+  /** Press and hold: record while held (see [onLongPressUp]); while a tap-started recording runs, cancel it. */
   override fun onLongPress() {
+    if (menu?.isShowing == true) menu?.dismiss()
     when (app.dictation.state.value) {
       is DotState.Recording, DotState.Transcribing -> {
         dot?.haptic(DotView.HAPTIC_REJECT)
         app.dictation.cancel()
       }
-      DotState.Idle, is DotState.Info, is DotState.Error -> {
-        val v = dot ?: return
-        val pos = dotPos ?: return
+      else -> {
         app.dictation.dismiss()
-        updateLanguages()
-        // one language downloaded: nothing to switch to, so long-press just hides the dot
-        if (!multiLang) return hideUntilNextKeyboard()
-        v.haptic(DotView.HAPTIC_LONG)
-        menu?.show(app.settings.language, ::menuLabel, pos.x, pos.y, v.dotSizePx, params?.type ?: WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY)
+        dot?.haptic(DotView.HAPTIC_LONG)
+        app.dictation.start()
+        holdRecording = app.dictation.state.value is DotState.Recording
       }
-      else -> Unit
     }
+  }
+
+  override fun onLongPressUp() {
+    if (!holdRecording) return
+    holdRecording = false
+    if (app.dictation.state.value is DotState.Recording) {
+      dot?.haptic(DotView.HAPTIC_TICK)
+      app.dictation.stop()
+    }
+  }
+
+  private fun openLanguageMenuOrHide() {
+    val v = dot ?: return
+    val pos = dotPos ?: return
+    app.dictation.dismiss()
+    updateLanguages()
+    // one language downloaded: nothing to switch to, so the gesture just hides the dot
+    if (!multiLang) return hideUntilNextKeyboard()
+    v.haptic(DotView.HAPTIC_LONG)
+    menu?.show(app.settings.language, ::menuLabel, pos.x, pos.y, v.dotSizePx, params?.type ?: WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY)
   }
 
   /** "English", "اردو  Urdu", "Français  French"; one name when both are the same. */
@@ -359,6 +399,9 @@ class DotAccessibilityService : AccessibilityService(), DotView.Listener, Output
 
   companion object {
     private const val TAG = "dot"
+
+    /** A double-tap must land this soon after the first tap started recording (covers the view's double-tap window). */
+    private const val DOUBLE_TAP_WINDOW_MS = 700L
 
     @Volatile var instance: DotAccessibilityService? = null
       private set

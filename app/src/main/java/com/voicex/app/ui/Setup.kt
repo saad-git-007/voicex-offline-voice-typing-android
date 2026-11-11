@@ -290,8 +290,9 @@ private fun DoneStep() {
   SectionCard("You're set") {
     Text("Open any app and tap a text field. The dot appears just above the keyboard.")
     Text("• Tap: start. Tap again: stop and copy.")
+    Text("• Press and hold: record while you hold; let go to transcribe.")
+    Text("• Double-tap: switch language, or hide until the keyboard opens again.")
     Text("• Long-press while recording: cancel.")
-    Text("• Long-press when idle: hide until the keyboard opens again.")
     Text("• Drag: move it. VoiceX remembers where.")
     Muted("Orange dot = something needs attention: tap it.")
   }

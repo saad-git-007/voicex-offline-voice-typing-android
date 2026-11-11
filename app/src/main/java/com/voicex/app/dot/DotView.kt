@@ -31,7 +31,13 @@ class DotView(context: Context, private val listener: Listener) : View(context) 
   interface Listener {
     fun onTap()
 
+    /** Second tap within the double-tap timeout of the first; the first was already delivered as [onTap]. */
+    fun onDoubleTap()
+
     fun onLongPress()
+
+    /** Finger lifted (or the gesture cancelled) after [onLongPress] fired. */
+    fun onLongPressUp()
 
     fun onDrag(dx: Int, dy: Int)
 
@@ -256,7 +262,7 @@ class DotView(context: Context, private val listener: Listener) : View(context) 
     canvas.drawLine(cx - s * 0.065f, stemBottom, cx + s * 0.065f, stemBottom, glyph)
   }
 
-  // ---- touch: tap, long-press, drag -------------------------------------------------------------------------
+  // ---- touch: tap, double-tap, long-press (hold), drag -------------------------------------------------------------------------
   private val slop = ViewConfiguration.get(context).scaledTouchSlop
   private var downX = 0f
   private var downY = 0f
@@ -264,6 +270,7 @@ class DotView(context: Context, private val listener: Listener) : View(context) 
   private var lastY = 0f
   private var dragging = false
   private var longPressed = false
+  private var lastTapUpAt = 0L
   private val longPress = Runnable {
     longPressed = true
     listener.onLongPress()
@@ -296,12 +303,23 @@ class DotView(context: Context, private val listener: Listener) : View(context) 
         removeCallbacks(longPress)
         when {
           dragging -> listener.onDragEnd()
-          !longPressed -> listener.onTap()
+          longPressed -> listener.onLongPressUp()
+          else -> {
+            val now = SystemClock.uptimeMillis()
+            if (now - lastTapUpAt <= ViewConfiguration.getDoubleTapTimeout() + DOUBLE_TAP_GRACE_MS) {
+              lastTapUpAt = 0L
+              listener.onDoubleTap()
+            } else {
+              lastTapUpAt = now
+              listener.onTap()
+            }
+          }
         }
       }
       MotionEvent.ACTION_CANCEL -> {
         removeCallbacks(longPress)
         if (dragging) listener.onDragEnd()
+        if (longPressed) listener.onLongPressUp()
       }
     }
     return true
@@ -314,6 +332,9 @@ class DotView(context: Context, private val listener: Listener) : View(context) 
   companion object {
     val BRAND_A = Color.rgb(0x6C, 0x4C, 0xF1)
     val BRAND_B = Color.rgb(0x2F, 0x6B, 0xF0)
+
+    /** ViewConfiguration's 300 ms double-tap window is tight for a small floating target; allow a little more. */
+    private const val DOUBLE_TAP_GRACE_MS = 100L
 
     const val HAPTIC_TICK = HapticFeedbackConstants.CLOCK_TICK
     const val HAPTIC_CONFIRM = HapticFeedbackConstants.CONFIRM

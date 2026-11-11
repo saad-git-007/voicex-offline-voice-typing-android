@@ -144,7 +144,7 @@ fun SettingsScreen(app: VoiceXApp, go: (Screen) -> Unit) {
           Text(if (l == Lang.EN) "English" else WhisperLanguages.displayName(whisperLang))
         }
       }
-      Muted("Switch quickly: long-press the dot and pick English or ${WhisperLanguages.nativeName(whisperLang)}. The menu and the language badge (EN / ${WhisperLanguages.badge(whisperLang)}) appear once both models are downloaded; with one model, long-press just hides the dot. Switching loads the other model (a second or two).")
+      Muted("Switch quickly: double-tap the dot and pick English or ${WhisperLanguages.nativeName(whisperLang)}. The menu and the language badge (EN / ${WhisperLanguages.badge(whisperLang)}) appear once both models are downloaded; with one model, double-tap just hides the dot. Switching loads the other model (a second or two).")
       HorizontalDivider()
       Text("Second language", fontWeight = FontWeight.SemiBold)
       Muted("English uses Parakeet. The second language uses Whisper, which knows about 100 languages; pick the one you speak. Accuracy varies by language.")

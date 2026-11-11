@@ -17,7 +17,7 @@ import android.widget.TextView
 import com.voicex.app.model.Lang
 
 /**
- * The dot's long-press menu: English / the Whisper language (اردو Urdu by default) / Hide. A small overlay window of its own, shown next to the dot and
+ * The dot's double-tap menu: English / the Whisper language (اردو Urdu by default) / Hide. A small overlay window of its own, shown next to the dot and
  * closed by a choice, a touch anywhere else, or the keyboard closing.
  */
 class DotMenu(

@@ -248,7 +248,7 @@ class DictationController(private val app: VoiceXApp) {
     if (settings.autoPaste) {
       val outcome = output?.paste(clipText) ?: AutoPaster.Outcome.FAILED
       label = if (outcome == AutoPaster.Outcome.FAILED) "Copied (couldn't paste here)" else "Pasted"
-      if (outcome == AutoPaster.Outcome.FAILED) AppLog.w(TAG, "auto-paste: the focused field accepted neither PASTE nor SET_TEXT; clipboard only")
+      if (outcome == AutoPaster.Outcome.FAILED) AppLog.w(TAG, "auto-paste failed (${AutoPaster.lastFailure}); clipboard only")
       else AppLog.ok(TAG, "auto-paste: ${outcome.name}")
     }
     flash(DotState.Done(label), if (label.length > 10) 1800 else 1100)

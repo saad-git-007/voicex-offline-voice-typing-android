@@ -25,7 +25,7 @@
 <td align="center" valign="top"><img src="docs/screenshots/recording.jpg" width="240" alt="Tap to talk"><br><sub><b>Tap to talk</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
 <td align="center" valign="top"><img src="docs/screenshots/transcribing.jpg" width="240" alt="Transcribed on the phone"><br><sub><b>Transcribed on the phone</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
 <td align="center" valign="top"><img src="docs/screenshots/pasted.jpg" width="240" alt="Pasted into the text field"><br><sub><b>Pasted into the text field</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
-<td align="center" valign="top"><img src="docs/screenshots/language-menu.jpg" width="240" alt="English or another language, one long-press"><br><sub><b>English or another language, one long-press</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
+<td align="center" valign="top"><img src="docs/screenshots/language-menu.jpg" width="240" alt="English or another language, one double-tap"><br><sub><b>English or another language, one double-tap</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
 <td align="center" valign="top"><img src="docs/screenshots/language-picker.jpg" width="240" alt="About 100 languages to choose from"><br><sub><b>About 100 languages to choose from</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
 <td align="center" valign="top"><img src="docs/screenshots/s23-ultra-benchmark.jpg" width="240" alt="Benchmark on a Galaxy S23 Ultra"><br><sub><b>Benchmark on a Galaxy S23 Ultra</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
 <td align="center" valign="top"><img src="docs/screenshots/settings.jpg" width="240" alt="Settings"><br><sub><b>Settings</b></sub><br><sub>&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;&#8199;</sub></td>
@@ -45,9 +45,9 @@ Built-in voice typing on most phones either sends audio to a server or is tied t
 ## Features
 
 - **Floating dictation dot.** Appears only while a soft keyboard is open, just above the keyboard's top edge, and disappears with it. Drag it anywhere; its position is remembered separately for portrait and landscape.
-- **One tap to talk.** Tap to record (red pulse plus elapsed time), tap again to transcribe. The text is copied to the clipboard, and with **auto-paste** inserted at the cursor of the field you're typing in.
+- **Tap or hold to talk.** Tap to record (red pulse plus elapsed time), tap again to transcribe. Or press and hold the dot while you speak and let go to transcribe, walkie-talkie style. The text is copied to the clipboard, and with **auto-paste** inserted at the cursor of the field you're typing in.
 - **Fully offline speech recognition.** Punctuated, capitalised English, and other languages in their own script. Audio and text never leave the device. The internet is used once per language, to download its model.
-- **English plus about 100 other languages.** English uses Parakeet. Other languages use OpenAI Whisper, which transcribes about 100 of them: pick yours in Settings → Language → **Second language** from a searchable list (Français, Español, Deutsch, 中文, 日本語, العربية, हिन्दी…). Long-press the dot to switch between English and that language; a small badge on the dot shows the current one (EN, FR, ZH…). The menu and badge appear once the Whisper model is downloaded; until then long-press simply hides the dot. Whisper is slower than Parakeet: on the S23 Ultra, 11.5 s of speech is transcribed in about 14 s (see [Other languages: accuracy and speed](#other-languages-accuracy-and-speed)).
+- **English plus about 100 other languages.** English uses Parakeet. Other languages use OpenAI Whisper, which transcribes about 100 of them: pick yours in Settings → Language → **Second language** from a searchable list (Français, Español, Deutsch, 中文, 日本語, العربية, हिन्दी…). Double-tap the dot to switch between English and that language; a small badge on the dot shows the current one (EN, FR, ZH…). The menu and badge appear once the Whisper model is downloaded; until then double-tap simply hides the dot. Whisper is slower than Parakeet: on the S23 Ultra, 11.5 s of speech is transcribed in about 14 s (see [Other languages: accuracy and speed](#other-languages-accuracy-and-speed)).
 - **Hardware acceleration with automatic selection.** A built-in benchmark tries every engine the phone has (Hexagon NPU, Adreno GPU via OpenCL and Vulkan, CPU), checks each transcript against the CPU's, and uses the fastest correct one. It also checks each accelerator on long audio and routes recordings to an engine verified for that length.
 - **Never fails silently.** A backend that won't load or errors out falls back to CPU. An accelerator that returns an empty result for real speech is redone on the CPU automatically. An accelerator that crashes the app outright (a native abort can't be caught) is remembered after the restart and never used with that model again (Whisper, for example, is never tried on the Hexagon NPU, where it crashes).
 - **Thoughtful details.** Long-press to cancel, "Nothing heard" when you didn't speak (your clipboard stays untouched), a safety cap (30 s to 15 min, default 5 min, with a warning pulse before it), stops cleanly for phone calls and audio-focus loss, and silence trimming before inference.
@@ -87,15 +87,15 @@ Whisper always encodes a 30-second window, padding short clips with silence, and
 
 ## Install
 
-1. Download `VoiceX-1.2.0-release.apk` from [**Releases**](../../releases).
-2. Install it with `adb install VoiceX-1.2.0-release.apk`, or open it on the phone and allow your file manager to install unknown apps.
+1. Download `VoiceX-1.3.0-release.apk` from [**Releases**](../../releases).
+2. Install it with `adb install VoiceX-1.3.0-release.apk`, or open it on the phone and allow your file manager to install unknown apps.
 3. Open VoiceX and follow the setup guide:
    1. allow the **microphone** and **notifications**;
    2. turn on the accessibility service **"VoiceX dictation dot"**. If it's greyed out ("Restricted setting"): App info → **⋮** → **Allow restricted settings**, then turn it on;
    3. download the model (541 MB, Wi-Fi);
    4. run the benchmark (about a minute).
 4. Open any app, tap a text field, and tap the dot.
-5. Optional, other languages: Settings → **Language** → download the Whisper model (574 MB) and choose your language under **Second language**. Then long-press the dot to switch between English and it.
+5. Optional, other languages: Settings → **Language** → download the Whisper model (574 MB) and choose your language under **Second language**. Then double-tap the dot to switch between English and it.
 
 **Requirements:** an arm64 Android 12+ phone with about 1.2 GB free (about 1.8 GB with other languages). NPU and GPU acceleration need a Snapdragon; other phones use the CPU.
 
@@ -112,15 +112,16 @@ Whisper always encodes a 30-second window, padding short clips with silence, and
 |---|---|
 | Tap (grey) | Start recording |
 | Tap (red) | Stop and transcribe → **Copied** / **Pasted** |
+| Press and hold | Record while you hold; let go to transcribe → **Copied** / **Pasted** |
+| Double-tap | With both language models downloaded: menu with **English** / your other language / Hide until the keyboard opens again. With one model: hide until the keyboard opens again |
 | Long-press while recording | Cancel and discard the audio |
-| Long-press when idle | With both language models downloaded: menu with **English** / your other language / Hide until the keyboard opens again. With one model: hide until the keyboard opens again |
 | Drag | Move it (remembered) |
 | Orange dot | Something needs attention (no model, mic denied…): tap it to fix |
 
 ### Switching languages
 
 <p align="center">
-  <img src="docs/screenshots/language-menu.jpg" width="200" alt="Long-press menu: English or another language">
+  <img src="docs/screenshots/language-menu.jpg" width="200" alt="Double-tap menu: English or another language">
   <img src="docs/screenshots/settings-language.jpg" width="200" alt="Language settings">
   <img src="docs/screenshots/language-picker.jpg" width="200" alt="Choosing from about 100 languages">
 </p>
@@ -133,7 +134,7 @@ Whisper always encodes a 30-second window, padding short clips with silence, and
 </p>
 
 - The accessibility service listens only for **window changes** and reads only the **type and position** of windows, to find the keyboard. It does **not** read, store or send on-screen text.
-- The single exception is the optional **auto-paste** (off by default). Right after a dictation you started, it inserts the text into the focused field: `ACTION_PASTE` first, then `ACTION_SET_TEXT` at the cursor. Password fields are never rewritten.
+- The single exception is the optional **auto-paste** (off by default). Right after a dictation you started, it inserts the text into the focused field: `ACTION_PASTE` first, then `ACTION_SET_TEXT` at the cursor, and for fields that offer neither (many Jetpack Compose and web text boxes) it types the text through the keyboard connection, as a keyboard would (Android 13+). Password fields are never rewritten.
 - Speech is processed in memory and discarded. History (last 10 transcripts) is stored only in app-private storage and can be turned off and cleared.
 - Logs record timings and engine names, never transcript text.
 
@@ -166,7 +167,7 @@ scripts/fetch-deps.sh --hexagon    # optional: Hexagon SDK 6.7 Community Edition
 
 # release signing: create keystore.properties (storeFile, storePassword, keyAlias, keyPassword)
 PATH=$ANDROID_HOME/cmake/4.1.2/bin:$PATH ./gradlew assembleRelease
-# -> dist/VoiceX-1.2.0-release.apk
+# -> dist/VoiceX-1.3.0-release.apk
 ```
 
 The build applies the patches in `patches/` to the transcribe.cpp submodule (currently one: the short Whisper encoder window). It skips any that are already applied.
