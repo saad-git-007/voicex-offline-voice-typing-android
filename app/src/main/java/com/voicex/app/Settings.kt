@@ -44,6 +44,11 @@ class Settings(context: Context) {
     get() = prefs.getBoolean(K_AUTO_PASTE, false)
     set(v) = prefs.edit().putBoolean(K_AUTO_PASTE, v).apply()
 
+  /** Rewrite known terms into their official transliteration (experimental, off by default). */
+  var transliteration: Boolean
+    get() = prefs.getBoolean(K_TRANSLITERATION, false)
+    set(v) = prefs.edit().putBoolean(K_TRANSLITERATION, v).apply()
+
   var trailingSpace: Boolean
     get() = prefs.getBoolean(K_TRAILING_SPACE, false)
     set(v) = prefs.edit().putBoolean(K_TRAILING_SPACE, v).apply()
@@ -162,6 +167,7 @@ class Settings(context: Context) {
     const val K_CAP = "cap_seconds"
     const val K_AUTO_PASTE = "auto_paste"
     const val K_TRAILING_SPACE = "trailing_space"
+    const val K_TRANSLITERATION = "transliteration"
     const val K_MODEL = "model"
     const val K_LANGUAGE = "language"
     const val K_WHISPER_LANGUAGE = "whisper_language"

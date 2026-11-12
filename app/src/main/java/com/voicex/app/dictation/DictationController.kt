@@ -241,9 +241,10 @@ class DictationController(private val app: VoiceXApp) {
     }
     AppLog.ok(TAG, "transcribed ${t.audioMs} ms of audio in ${t.inferenceMs} ms on ${t.kind.label} [${t.device}], ${t.text.length} chars${if (t.truncated) " (truncated)" else ""}")
     val settings = app.settings
-    val clipText = if (settings.autoPaste && settings.trailingSpace) t.text + " " else t.text
+    val text = if (settings.transliteration) com.voicex.app.output.Transliteration.apply(t.text) else t.text
+    val clipText = if (settings.autoPaste && settings.trailingSpace) text + " " else text
     ClipboardWriter.copy(app, clipText)
-    app.history.add(HistoryItem(t.text, System.currentTimeMillis(), t.audioMs, t.inferenceMs, "${t.kind.label} · ${t.device}"))
+    app.history.add(HistoryItem(text, System.currentTimeMillis(), t.audioMs, t.inferenceMs, "${t.kind.label} · ${t.device}"))
     var label = "Copied"
     if (settings.autoPaste) {
       val outcome = output?.paste(clipText) ?: AutoPaster.Outcome.FAILED

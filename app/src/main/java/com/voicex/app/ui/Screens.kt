@@ -236,7 +236,11 @@ fun SettingsScreen(app: VoiceXApp, go: (Screen) -> Unit) {
       FilledTonalButton(onClick = { go(Screen.Logs) }) { Text("Logs (activity & crashes)") }
     }
     SectionCard("About") {
-      Muted("VoiceX ${com.voicex.app.BuildConfig.VERSION_NAME} · on-device speech recognition via transcribe.cpp (MIT): NVIDIA Parakeet Unified EN 0.6B for English, OpenAI Whisper large-v3-turbo (MIT) for Urdu. Urdu benchmark clips from Google FLEURS (CC BY 4.0).")
+      Muted("VoiceX ${com.voicex.app.BuildConfig.VERSION_NAME} · on-device speech recognition via transcribe.cpp (MIT): NVIDIA Parakeet Unified EN 0.6B for English, OpenAI Whisper large-v3-turbo (MIT) for other languages. Whisper benchmark clips from Google FLEURS (CC BY 4.0).")
+    }
+    SectionCard("Transliteration feature (experimental)") {
+      Toggle("Transliteration feature", s.transliteration) { s.transliteration = it }
+      Muted("Writes terms such as Ḥaḍrat, Khalīfatul Masīḥ, Jamā‘at, Ijtimā‘ and Waqf Nau in their official transliteration, with full diacritics, however the speech model spelled them. ${com.voicex.app.output.Transliteration.TERMS.size} terms from the official list.")
     }
   }
 }
@@ -344,7 +348,7 @@ fun TestScreen(app: VoiceXApp, go: (Screen) -> Unit) {
     if (busy) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
     error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     result?.let { r ->
-      SectionCard("Transcript") { Text(r.text.ifEmpty { "(nothing recognised)" }) }
+      SectionCard("Transcript") { Text((if (app.settings.transliteration) com.voicex.app.output.Transliteration.apply(r.text) else r.text).ifEmpty { "(nothing recognised)" }) }
       SectionCard("Timing") {
         Text("Audio recorded: %.2f s (%.2f s after trimming silence)".format(rawMs / 1000.0, r.audioMs / 1000.0))
         Text("Inference: ${r.inferenceMs} ms  (%.1fx real time)".format(if (r.inferenceMs > 0) r.audioMs.toDouble() / r.inferenceMs else 0.0))

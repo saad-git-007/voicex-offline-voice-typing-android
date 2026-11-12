@@ -50,9 +50,10 @@ Built-in voice typing on most phones either sends audio to a server or is tied t
 - **English plus about 100 other languages.** English uses Parakeet. Other languages use OpenAI Whisper, which transcribes about 100 of them: pick yours in Settings → Language → **Second language** from a searchable list (Français, Español, Deutsch, 中文, 日本語, العربية, हिन्दी…). Double-tap the dot to switch between English and that language; a small badge on the dot shows the current one (EN, FR, ZH…). The menu and badge appear once the Whisper model is downloaded; until then double-tap simply hides the dot. Whisper is slower than Parakeet: on the S23 Ultra, 11.5 s of speech is transcribed in about 14 s (see [Other languages: accuracy and speed](#other-languages-accuracy-and-speed)).
 - **Hardware acceleration with automatic selection.** A built-in benchmark tries every engine the phone has (Hexagon NPU, Adreno GPU via OpenCL and Vulkan, CPU), checks each transcript against the CPU's, and uses the fastest correct one. It also checks each accelerator on long audio and routes recordings to an engine verified for that length.
 - **Never fails silently.** A backend that won't load or errors out falls back to CPU. An accelerator that returns an empty result for real speech is redone on the CPU automatically. An accelerator that crashes the app outright (a native abort can't be caught) is remembered after the restart and never used with that model again (Whisper, for example, is never tried on the Hexagon NPU, where it crashes).
+- **Transliteration feature (experimental, off by default).** Turn it on at the bottom of Settings and terms from the official transliteration list (Rules and Regulations of Taḥrīk-i-Jadīd, revision 2020) are written with their full diacritics, however the speech model spelled them: "Hazrat Khalifatul Masih" becomes **Ḥaḍrat Khalīfatul Masīḥ**, "Waqf-e-Nau" becomes **Waqf Nau**, "Jamaat" becomes **Jamā‘at**. Matching ignores case, accents, hyphens and common spelling swaps, prefers the longest phrase, and leaves ordinary English words alone.
 - **Thoughtful details.** Long-press to cancel, "Nothing heard" when you didn't speak (your clipboard stays untouched), a safety cap (30 s to 15 min, default 5 min, with a warning pulse before it), stops cleanly for phone calls and audio-focus loss, and silence trimming before inference.
 - **Model download done right.** Resumable (HTTP range requests), Wi-Fi-only by default, and SHA-256 verified before use. Q5_K_M (541 MB, best accuracy) or Q4_K_M (477 MB, less memory).
-- **Settings.** Safety cap, auto-paste (+ trailing space), model, engine override and re-benchmark, CPU threads (pinned to the performance cores), keep-loaded vs. load-on-keyboard-open, dot size/opacity, haptics, local history (last 10), and a **Test transcription** screen with timing readout.
+- **Settings.** Safety cap, auto-paste (+ trailing space), model, engine override and re-benchmark, CPU threads (pinned to the performance cores), keep-loaded vs. load-on-keyboard-open, dot size/opacity, haptics, local history (last 10), a **Test transcription** screen with timing readout, and the experimental transliteration feature.
 - **Diagnostics.** Activity log (successes and problems, with timings but never transcript text), crash reports including native crashes, and the session log, each with one-tap **Copy all**.
 - **Guided setup.** A first-run wizard covers permissions, enabling the accessibility service (including Android's *Allow restricted settings* step for sideloaded apps), the model download and the benchmark.
 
@@ -87,8 +88,8 @@ Whisper always encodes a 30-second window, padding short clips with silence, and
 
 ## Install
 
-1. Download `VoiceX-1.3.0-release.apk` from [**Releases**](../../releases).
-2. Install it with `adb install VoiceX-1.3.0-release.apk`, or open it on the phone and allow your file manager to install unknown apps.
+1. Download `VoiceX-1.4.0-release.apk` from [**Releases**](../../releases).
+2. Install it with `adb install VoiceX-1.4.0-release.apk`, or open it on the phone and allow your file manager to install unknown apps.
 3. Open VoiceX and follow the setup guide:
    1. allow the **microphone** and **notifications**;
    2. turn on the accessibility service **"VoiceX dictation dot"**. If it's greyed out ("Restricted setting"): App info → **⋮** → **Allow restricted settings**, then turn it on;
@@ -167,7 +168,7 @@ scripts/fetch-deps.sh --hexagon    # optional: Hexagon SDK 6.7 Community Edition
 
 # release signing: create keystore.properties (storeFile, storePassword, keyAlias, keyPassword)
 PATH=$ANDROID_HOME/cmake/4.1.2/bin:$PATH ./gradlew assembleRelease
-# -> dist/VoiceX-1.3.0-release.apk
+# -> dist/VoiceX-1.4.0-release.apk
 ```
 
 The build applies the patches in `patches/` to the transcribe.cpp submodule (currently one: the short Whisper encoder window). It skips any that are already applied.

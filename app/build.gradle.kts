@@ -5,8 +5,8 @@ plugins {
   alias(libs.plugins.compose.compiler)
 }
 
-val voicexVersionName = "1.3.0"
-val voicexVersionCode = 5
+val voicexVersionName = "1.4.0"
+val voicexVersionCode = 6
 
 // Optional accelerator SDKs, see scripts/fetch-deps.sh. Each backend is switched on when its files exist.
 val thirdParty = rootProject.file("third_party")
