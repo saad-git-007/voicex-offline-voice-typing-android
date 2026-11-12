@@ -76,6 +76,9 @@ object Transliteration {
       "Za‘īm", "Zakāt", "Zirā‘at", "Zūd Navīsān", "Ẓurūf Gilī",
     )
 
+  /** Forms that appear only inside listed phrases ("Maḥmūd Majālis", "Ṣāḥib Niṣāb") but are often said alone. */
+  val DERIVED_TERMS: List<String> = listOf("Majālis", "Ṣāḥib")
+
   /** Common spellings the loose key still misses: spoken/Urdu-style spelling -> official term. */
   private val EXTRA_SPELLINGS: Map<String, String> =
     mapOf(
@@ -85,9 +88,10 @@ object Transliteration {
       "Tehreek Jadeed" to "Taḥrīk-i-Jadīd",
       "Behishti Maqbara" to "Bahishtī Maqbara",
       "Sadar" to "Ṣadr",
+      "Sadhar" to "Ṣadr",
       "Salah" to "Ṣalāt",
       "Zakah" to "Zakāt",
-    ).filterValues { it in TERMS }
+    ).filterValues { it in TERMS || it in DERIVED_TERMS }
 
   /**
    * A single word whose key equals a term's but which is ordinary English ("am", "mall", "id"): never replaced on
@@ -114,7 +118,7 @@ object Transliteration {
       val old = m[key]
       if (old == null || e.term.length > old.term.length) m[key] = e
     }
-    for (t in TERMS) for (k in termKeys(t)) put(k, t)
+    for (t in TERMS + DERIVED_TERMS) for (k in termKeys(t)) put(k, t)
     for ((spelling, t) in EXTRA_SPELLINGS) put(phraseKey(spelling.split(' ')), t)
     m
   }
@@ -177,24 +181,77 @@ object Transliteration {
     return idx
   }
 
-  private fun longestMatch(tokens: List<Token>, start: Int): Match? {
+  private fun longestMatch(tokens: List<Token>, start: Int): Match? = longestMatch(tokens, start, fuzzy = false) ?: longestMatch(tokens, start, fuzzy = true)
+
+  /**
+   * Exact keys are tried at every length before any near miss, so a loose match never swallows a neighbour that
+   * an exact one would have left alone ("Wakilul Mal III" stays "Wakīlul Māl III").
+   */
+  private fun longestMatch(tokens: List<Token>, start: Int, fuzzy: Boolean): Match? {
     val words = run(tokens, start)
     for (n in words.size downTo 1) {
+      // Near misses ("Khudna Mul Ahmadiyya") for phrases only: for a lone word a letter or two is the gap between
+      // ordinary English and a term ("Muslim" / "Mu‘allim", "Shared" / "Sharī‘a").
+      if (fuzzy && n == 1) continue
       val w = words.subList(0, n).map { tokens[it].text }
       // A trailing possessive ("Masih's") stays after the term.
       val lastWord = w.last()
       val poss = POSSESSIVE.find(lastWord)
       val core = if (poss != null) w.dropLast(1) + lastWord.substring(0, poss.range.first) else w
       val suffix = poss?.value ?: ""
+      if (core.any { x -> x.isEmpty() || x.none { it.isLetter() } }) continue
       // Izafat / "o" connectors don't count at either end of a match.
       if (core.first().lowercase() in CONNECTORS || core.last().lowercase() in CONNECTORS) continue
       if (n == 1 && core[0].lowercase() in ENGLISH_WORDS) continue
       for (k in inputKeys(core)) {
-        val e = index[k] ?: continue
-        return Match(e.term, suffix, words[n - 1] + 1)
+        val e = if (fuzzy) fuzzy(k) else index[k]
+        if (e != null) return Match(e.term, suffix, words[n - 1] + 1)
       }
     }
     return null
+  }
+
+  /** Letters a key may differ by from a term's key and still match: none below 10 ("the area" / "Sharia"), 1, then 2 from 14. */
+  internal fun allowedEdits(keyLength: Int): Int = when {
+    keyLength < 10 -> 0
+    keyLength < 14 -> 1
+    else -> 2
+  }
+
+  /** The closest term key within [allowedEdits]; same first letter required, ties go to the longer term. */
+  private fun fuzzy(k: String): Entry? {
+    val max = allowedEdits(k.length)
+    if (max == 0 || k.isEmpty()) return null
+    var best: Entry? = null
+    var bestD = max + 1
+    for ((tk, e) in index) {
+      if (tk[0] != k[0] || kotlin.math.abs(tk.length - k.length) > max || allowedEdits(tk.length) == 0) continue
+      val d = editDistance(k, tk, max)
+      if (d < bestD || (d == bestD && best != null && e.term.length > best.term.length)) {
+        best = e
+        bestD = d
+      }
+    }
+    return if (bestD <= max) best else null
+  }
+
+  /** Levenshtein distance, giving up (returning max + 1) once it must exceed [max]. */
+  internal fun editDistance(a: String, b: String, max: Int): Int {
+    var prev = IntArray(b.length + 1) { it }
+    var cur = IntArray(b.length + 1)
+    for (i in 1..a.length) {
+      cur[0] = i
+      var rowMin = cur[0]
+      for (j in 1..b.length) {
+        cur[j] = minOf(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + if (a[i - 1] == b[j - 1]) 0 else 1)
+        rowMin = minOf(rowMin, cur[j])
+      }
+      if (rowMin > max) return max + 1
+      val t = prev
+      prev = cur
+      cur = t
+    }
+    return prev[b.length]
   }
 
   private val POSSESSIVE = Regex("""['’]s$""")

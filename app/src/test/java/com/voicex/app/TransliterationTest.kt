@@ -60,7 +60,22 @@ class TransliterationTest {
     assertEquals(ur, t(ur))
   }
 
+  @Test fun realTranscript() {
+    assertEquals(
+      "Majlis Khuddāmul Ahmadiyya will have to tell Ṣadr Ṣāḥib about which Majdis are they going to and how they're going to work with Ṣan‘at-o-Tijārat.",
+      t("Majlis Khudna Mul Ahmadiyya will have to tell Sadhar Sahib about which Majdis are they going to and how they're going to work with San'at-o-Tijarat."),
+    )
+  }
+
+  @Test fun nearMissPhrasesOnly() {
+    assertEquals("Khuddāmul Ahmadiyya", t("Khudna Mul Ahmadiyya"))
+    assertEquals("Khalīfatul Masīḥ", t("Khalifatul Masiha"))
+    // Single words are never matched loosely, and short phrases need an exact key.
+    assertEquals("A Muslim shared the parallel results.", t("A Muslim shared the parallel results."))
+    assertEquals("abuse occurs in the area of products", t("abuse occurs in the area of products"))
+  }
+
   @Test fun everyTermMapsToItself() {
-    for (term in Transliteration.TERMS) assertEquals(term, t(term))
+    for (term in Transliteration.TERMS + Transliteration.DERIVED_TERMS) assertEquals(term, t(term))
   }
 }
