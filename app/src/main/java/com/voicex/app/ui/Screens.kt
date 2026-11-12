@@ -238,9 +238,8 @@ fun SettingsScreen(app: VoiceXApp, go: (Screen) -> Unit) {
     SectionCard("About") {
       Muted("VoiceX ${com.voicex.app.BuildConfig.VERSION_NAME} · on-device speech recognition via transcribe.cpp (MIT): NVIDIA Parakeet Unified EN 0.6B for English, OpenAI Whisper large-v3-turbo (MIT) for other languages. Whisper benchmark clips from Google FLEURS (CC BY 4.0).")
     }
-    SectionCard("Transliteration feature (experimental)") {
-      Toggle("Transliteration feature", s.transliteration) { s.transliteration = it }
-      Muted("Writes terms such as Ḥaḍrat, Khalīfatul Masīḥ, Jamā‘at, Ijtimā‘ and Waqf Nau in their official transliteration, with full diacritics, however the speech model spelled them. ${com.voicex.app.output.Transliteration.TERMS.size} terms from the official list.")
+    SectionCard {
+      Toggle("Transliteration (experimental)", s.transliteration) { s.transliteration = it }
     }
   }
 }
