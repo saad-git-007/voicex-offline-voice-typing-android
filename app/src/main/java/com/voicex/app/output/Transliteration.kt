@@ -77,7 +77,7 @@ object Transliteration {
     )
 
   /** Forms that appear only inside listed phrases ("Maḥmūd Majālis", "Ṣāḥib Niṣāb") but are often said alone. */
-  val DERIVED_TERMS: List<String> = listOf("Assalām ‘Alaikum", "Wa'laikum Salām", "Khuddām", "Majālis", "Ṣāḥib")
+  val DERIVED_TERMS: List<String> = listOf("Assalām ‘Alaikum", "Jazāk'Allāh", "Wa'laikum Salām", "Khuddām", "Majālis", "Ṣāḥib")
 
   /** Common spellings the loose key still misses: spoken/Urdu-style spelling -> official term. */
   private val EXTRA_SPELLINGS: Map<String, String> =
