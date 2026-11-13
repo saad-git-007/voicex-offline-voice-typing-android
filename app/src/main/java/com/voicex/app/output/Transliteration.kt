@@ -77,11 +77,14 @@ object Transliteration {
     )
 
   /** Forms that appear only inside listed phrases ("Maḥmūd Majālis", "Ṣāḥib Niṣāb") but are often said alone. */
-  val DERIVED_TERMS: List<String> = listOf("Majālis", "Ṣāḥib")
+  val DERIVED_TERMS: List<String> = listOf("Assalām ‘Alaikum", "Khuddām", "Majālis", "Ṣāḥib")
 
   /** Common spellings the loose key still misses: spoken/Urdu-style spelling -> official term. */
   private val EXTRA_SPELLINGS: Map<String, String> =
     mapOf(
+      "Assalamu Alaikum" to "Assalām ‘Alaikum",
+      "Salam Alaikum" to "Assalām ‘Alaikum",
+      "Salamu Alaikum" to "Assalām ‘Alaikum",
       "Hazoor" to "Ḥuḍūr",
       "Huzur" to "Ḥuḍūr",
       "Tehrik Jadid" to "Taḥrīk-i-Jadīd",
@@ -286,6 +289,8 @@ object Transliteration {
       // "Masīḥil Awwal" / "Masīḥ ul Awwal": the joining vowel varies.
       forms += JOINING_IL.replace(base) { m -> "ul " + m.groupValues[1] }
     }
+    // The guttural kh is often heard as a plain h: "Khuddām" comes out as "Huddam".
+    for (f in forms.toList()) forms += INITIAL_KH.replace(f, "H")
     val keys = LinkedHashSet<String>()
     for (f in forms) {
       val words = f.split(' ', '-').filter { it.isNotBlank() }
@@ -296,6 +301,7 @@ object Transliteration {
   }
 
   private val ASSIMILATED = Regex("""([ui])(th|dh|sh|ṣ|ṭ|ẓ|t|d|r|z|s|n)\s+(\2)""", RegexOption.IGNORE_CASE)
+  private val INITIAL_KH = Regex("""(?<!\p{L})Kh""", RegexOption.IGNORE_CASE)
   private val JOINING_IL = Regex("""(?<=\p{L})(?:il|ir|ith)\s+(\p{L})""")
 
   internal fun phraseKey(words: List<String>): String = key(words.joinToString(""))
@@ -305,6 +311,7 @@ object Transliteration {
     val stripped =
       Normalizer.normalize(s.lowercase(), Normalizer.Form.NFD).filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() && it.isLetter() }
     var k = stripped
+      .replace("ddh", "d") // "Huddham": a doubled d with an h, not the dh sound
       .replace("dh", "z")
       .replace("th", "s")
       .replace("ph", "f")

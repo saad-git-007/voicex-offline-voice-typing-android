@@ -67,6 +67,19 @@ class TransliterationTest {
     )
   }
 
+  @Test fun greeting() {
+    for (said in listOf("Assalamu alaikum", "Assalam o Alaikum", "As-salamu alaykum", "Asalam alaikum", "Salaam alaikum", "Assalamualaikum"))
+      assertEquals(said, "Assalām ‘Alaikum, everyone.", t("$said, everyone."))
+  }
+
+  @Test fun khHeardAsH() {
+    assertEquals("Khuddām", t("Huddham"))
+    assertEquals("Khuddām", t("huddam"))
+    assertEquals("Majlis Khuddāmul Ahmadiyya meets today.", t("Majlis Huddham ul Ahmadiyya meets today."))
+    assertEquals("Majlis Khuddāmul Ahmadiyya", t("Majlis Huddhamul Ahmadiyya"))
+    assertEquals("Khilāfat", t("Hilafat"))
+  }
+
   @Test fun nearMissPhrasesOnly() {
     assertEquals("Khuddāmul Ahmadiyya", t("Khudna Mul Ahmadiyya"))
     assertEquals("Khalīfatul Masīḥ", t("Khalifatul Masiha"))
