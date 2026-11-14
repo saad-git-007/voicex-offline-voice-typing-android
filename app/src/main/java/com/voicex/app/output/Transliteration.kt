@@ -31,13 +31,13 @@ object Transliteration {
       // G
       "Ghulām", "Gosht",
       // H
-      "Ḥadīth", "Ḥaḍrat", "Ḥāḍrī Nigrānī", "Ḥāfiẓ", "Ḥamd", "Ḥifẓ", "Ḥilful Fuḍūl", "Ḥiṣṣa Āmad", "Ḥiṣṣa Jā‘idād",
+      "Ḥadīth", "Ḥaḍrat", "Ḥāḍrī Nigrānī", "Ḥāfiẓ", "Ḥamd", "Ḥifẓ", "Ḥilful Fuḍūl", "Ḥiṣṣa Āmad", "Ḥiṣṣa Jā’idād",
       "Ḥuḍūr",
       // I
       "‘Īd", "‘Īdain", "Iftā’", "Ijrā’ Parchī", "Ijtimā‘", "Imām", "Imāmuṣ Ṣalāt", "Imārat", "Intikhāb", "Irshād",
       "Ishā‘at", "Iṣlāḥ-o-Irshād", "Islām", "Istiqbāl",
       // J
-      "Jā‘idād", "Jalsa Gāh", "Jalsa Sālāna", "Jamā‘at", "Jāmi‘a", "Jāmi‘āt", "Jumu‘a",
+      "Jā’idād", "Jalsa Gāh", "Jalsa Sālāna", "Jamā‘at", "Jāmi‘a", "Jāmi‘āt", "Jumu‘a",
       // K
       "Khalīfa", "Khalīfatul Masīḥ", "Khalīfatul Masīḥil Awwal", "Khalīfatul Masīḥir Rābi‘", "Khalīfatul Masīḥith Thālith",
       "Khalīfatul Masīḥith Thānī", "Khārijiyya", "Khazāna", "Khidmat Khalq", "Khilāfat", "Khurāk", "Khuddāmul Ahmadiyya",
@@ -55,7 +55,7 @@ object Transliteration {
       // P
       "Parālī", "Pukhta Sāmān",
       // Q
-      "Qaḍā’", "Qāḍī", "Qādiān", "Qā‘id", "Qānūnī", "Qur’ān",
+      "Qaḍā’", "Qāḍī", "Qādiān", "Qā’id", "Qānūnī", "Qur’ān",
       // R
       "Rābi‘", "Rabwah", "Rishta Nāṭa", "Roshnī",
       // S
@@ -99,6 +99,9 @@ object Transliteration {
       "Waqfe Jade" to "Waqf Jadīd",
       "Wakse Jade" to "Waqf Jadīd",
       "Wakf Jade" to "Waqf Jadīd",
+      "Kait" to "Qā’id",
+      "Saib" to "Ṣāḥib",
+      "Sahab" to "Ṣāḥib",
       "Hazoor" to "Ḥuḍūr",
       "Huzur" to "Ḥuḍūr",
       "Tehrik Jadid" to "Taḥrīk-i-Jadīd",
