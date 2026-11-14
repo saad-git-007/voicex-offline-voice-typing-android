@@ -84,6 +84,14 @@ class TransliterationTest {
     assertEquals("Jazāk'Allāh Khair", t("Jazakallah Khair"))
   }
 
+  @Test fun reportedMishearings() {
+    assertEquals("Jazāk'Allāh, see you at Jalsa Sālāna.", t("Jazakullah, see you at Jaza Solana."))
+    assertEquals("Jalsa Sālāna", t("Jalsa Solana"))
+    assertEquals("Jalsa Sālāna", t("Jalsa Salana"))
+    assertEquals("Our Ḥalqa meets on Friday.", t("Our Halka meets on Friday."))
+    assertEquals("Ḥalqa", t("Halqa"))
+  }
+
   @Test fun khHeardAsH() {
     assertEquals("Khuddām", t("Huddham"))
     assertEquals("Khuddām", t("huddam"))
