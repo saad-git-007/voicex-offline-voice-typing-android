@@ -92,6 +92,16 @@ class TransliterationTest {
     assertEquals("Ḥalqa", t("Halqa"))
   }
 
+  @Test fun jadidAndAfsar() {
+    assertEquals(
+      "Taḥrīk-i-Jadīd and Waqf Jadīd will be there too along with their Afsar Jalsa Gāh.",
+      t("Tarik Jade and Wakse Jade will be there too along with their Afsir Jalsa Gāh."),
+    )
+    assertEquals("Afsar Jalsa Gāh", t("Afsur Jalsa Gah"))
+    assertEquals("Afsar", t("Afsar"))
+    assertEquals("A jade ring", t("A jade ring"))
+  }
+
   @Test fun khHeardAsH() {
     assertEquals("Khuddām", t("Huddham"))
     assertEquals("Khuddām", t("huddam"))
