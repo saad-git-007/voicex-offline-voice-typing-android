@@ -109,6 +109,13 @@ class TransliterationTest {
     assertEquals("Ḥiṣṣa Jā’idād", t("Hissa Jaidad"))
   }
 
+  @Test fun qaidSabAndTeharike() {
+    assertEquals("Qā’id Ṣāḥib", t("Khait Sab"))
+    assertEquals("Ṣadr Ṣāḥib", t("Sadar Sab"))
+    for (said in listOf("Teharike Jade", "Teharik Jade", "Tehrike Jade", "Tehreek Jade", "Teharike Jadid", "Tehreek Jadid"))
+      assertEquals(said, "Taḥrīk-i-Jadīd", t(said))
+  }
+
   @Test fun khHeardAsH() {
     assertEquals("Khuddām", t("Huddham"))
     assertEquals("Khuddām", t("huddam"))
