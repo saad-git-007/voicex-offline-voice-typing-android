@@ -112,6 +112,7 @@ object Transliteration {
       "Kai Sahab" to "Qā’id Ṣāḥib",
       "Kai Saib" to "Qā’id Ṣāḥib",
       "Kai Sab" to "Qā’id Ṣāḥib",
+      "Amla" to "‘Āmila",
       "Hazoor" to "Ḥuḍūr",
       "Huzur" to "Ḥuḍūr",
       "Tehrik Jadid" to "Taḥrīk-i-Jadīd",
