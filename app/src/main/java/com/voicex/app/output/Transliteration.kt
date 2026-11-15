@@ -77,7 +77,7 @@ object Transliteration {
     )
 
   /** Forms that appear only inside listed phrases ("Maḥmūd Majālis", "Ṣāḥib Niṣāb") but are often said alone. */
-  val DERIVED_TERMS: List<String> = listOf("Afsar", "Assalām ‘Alaikum", "Ḥalqa", "Jazāk'Allāh", "Qā’id Ṣāḥib", "Wa'laikum Salām", "Khuddām", "Majālis", "Ṣāḥib")
+  val DERIVED_TERMS: List<String> = listOf("Afsar", "Assalām ‘Alaikum", "Ḥalqa", "Jazāk'Allāh", "Qā’id Ṣāḥib", "Ṣadr Ṣāḥib", "Wa'laikum Salām", "Khuddām", "Majālis", "Ṣāḥib")
 
   /** Common spellings the loose key still misses: spoken/Urdu-style spelling -> official term. */
   private val EXTRA_SPELLINGS: Map<String, String> =
@@ -120,6 +120,13 @@ object Transliteration {
       "Mukfejade" to "Waqf Jadīd",
       "Mukfe Jade" to "Waqf Jadīd",
       "Wakfejade" to "Waqf Jadīd",
+      "Sadasayab" to "Ṣadr Ṣāḥib",
+      "Sada Sayab" to "Ṣadr Ṣāḥib",
+      "Sadasab" to "Ṣadr Ṣāḥib",
+      "Sada Sab" to "Ṣadr Ṣāḥib",
+      "Sada Saib" to "Ṣadr Ṣāḥib",
+      "Sada Sahib" to "Ṣadr Ṣāḥib",
+      "Sadasahib" to "Ṣadr Ṣāḥib",
       "Hazoor" to "Ḥuḍūr",
       "Huzur" to "Ḥuḍūr",
       "Tehrik Jadid" to "Taḥrīk-i-Jadīd",

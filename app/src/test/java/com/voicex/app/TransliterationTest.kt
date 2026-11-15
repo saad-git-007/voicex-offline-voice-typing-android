@@ -135,6 +135,11 @@ class TransliterationTest {
       assertEquals(said, "Waqf Jadīd", t(said))
   }
 
+  @Test fun sadrSahib() {
+    for (said in listOf("Sadasayab", "Sadasab", "sada sab", "Sada Sayab", "Sada Sahib", "Sadar Sahib", "Sadr Sahab"))
+      assertEquals(said, "Please tell Ṣadr Ṣāḥib.", t("Please tell $said."))
+  }
+
   @Test fun khHeardAsH() {
     assertEquals("Khuddām", t("Huddham"))
     assertEquals("Khuddām", t("huddam"))
